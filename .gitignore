@@ -1,5 +1,9 @@
 node_modules/
+dist/
+.next/
+coverage/
 .DS_Store
 *.log
 .env
 !.env.example
+backend/.phpunit.result.cache

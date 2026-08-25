@@ -1,0 +1,29 @@
+@import "tailwindcss";
+@source "../../../packages/ui/src";
+
+/* Engineering Blueprint — design tokens landing page (putih × cobalt × IBM Plex) */
+@theme {
+  --color-cobalt-50: #eef4ff;
+  --color-cobalt-100: #dbe7fe;
+  --color-cobalt-300: #a5c0fc;
+  --color-cobalt-400: #7a9df8;
+  --color-cobalt-500: #4f78f0;
+  --color-cobalt-600: #2f5be0;
+  --color-cobalt-700: #2449bd;
+  --color-paper: #fafbfe;
+  --color-ink: #101828;
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+body {
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+.blueprint-grid {
+  background-image: linear-gradient(to right, rgb(47 91 224 / 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(47 91 224 / 0.04) 1px, transparent 1px);
+  background-size: 24px 24px;
+}

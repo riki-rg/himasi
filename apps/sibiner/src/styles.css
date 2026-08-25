@@ -1,0 +1,18 @@
+@import "tailwindcss";
+@source "../../../packages/ui/src";
+
+/* Warm Library — tokens app Sibiner (krem × hijau hutan × serif) */
+@theme {
+  --color-forest-50: #f0f5f1;
+  --color-forest-100: #dce8de;
+  --color-forest-600: #2e5741;
+  --color-forest-700: #1e3a2f;
+  --color-amber-accent: #b98a2e;
+  --color-kertas: #faf6ee;
+  --font-serif: "Cormorant Garamond", Georgia, serif;
+}
+
+body {
+  background-color: var(--color-kertas);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+}

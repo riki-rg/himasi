@@ -105,12 +105,14 @@ Urutan konkret:
 - ~~Kelas & materi~~ ✅ materi gated member disetujui (non-member 403); publik list tanpa materi; upload file ≤10MB / link; pengajar via penugasan divisi
 - 📌 Seed baru: 6 kategori kas standar (Iuran/Sponsor/Donasi/Konsumsi/Transportasi/Perlengkapan)
 
-### FASE 7+ — Frontend (setelah endpoint fase terkait stabil)
+### FASE 7+ — Frontend ✅ scaffold tuntas (v1 berfungsi, siap iterasi wireframe lanjutan)
 
-1. Scaffold monorepo pnpm workspace → `apps/landing`, `apps/bitsi`, `apps/sibiner`, `packages/ui`
-2. Landing page (wireframe: `docs/design/wireframes/home.md`)
-3. BitSI (mulai dari `/daftar` + dashboard — wireframe tersedia)
-4. Sibiner (mirror pola BitSI)
+1. ~~Scaffold monorepo pnpm workspace~~ ✅ `apps/{landing,bitsi,sibiner}` + `packages/ui` · Biome + TS strict + vitest
+2. ~~Landing page~~ ✅ Next.js App Router · home sesuai wireframe (`home.md`) · ISR 60s · artikel list/detail · agenda · galeri · struktur org chart · **anti-blank ADR L7** (tiap section degrade mandiri) · CTA gabung → env BitSI (OQ-3)
+3. ~~BitSI~~ ✅ `/daftar` lengkap per `bitsi-daftar.md` (stepper, error inline RFC 7807, layar sukses pending) · login (+error mapping) · `/app` guarded (sidebar desktop/bottom-tab mobile) · dashboard hero rapat terdekat + kelas + pengumuman
+4. ~~Sibiner~~ ✅ Warm Library tokens (krem × forest × serif) · home rak buku dari `publik/proyeks?komunitas=SIBINER` · login · `/app` daftar diskusi — mirror pola BitSI (bukti S3)
+- 📌 Komponen struktural di `@himsi/ui`; yang membedakan antar-app hanya design tokens (@theme) — prinsip wireframes README #5
+- 📌 Quality gates frontend: `pnpm lint` + `typecheck` + `test` (7/7) + `build` hijau semua
 
 ## 📜 Aturan Main (WAJIB dipatuhi AI)
 
