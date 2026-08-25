@@ -43,5 +43,16 @@ class AppServiceProvider extends ServiceProvider
                 ->whereHas('jabatan', fn ($q) => $q->where('tingkat', 'utama'))
                 ->exists() ?? false;
         });
+        Gate::define('kelola-struktur', fn (User $user) => app(RoleResolver::class)->isAdminPusat($user));
+        Gate::define('kelola-konten', function (User $user) {
+            if (app(RoleResolver::class)->isAdminPusat($user)) {
+                return true;
+            }
+
+            return $user->member?->penugasans()
+                ->whereHas('periode', fn ($q) => $q->where('status', 'aktif'))
+                ->whereHas('jabatan', fn ($q) => $q->whereIn('tingkat', ['utama', 'staf']))
+                ->exists() ?? false;
+        });
     }
 }

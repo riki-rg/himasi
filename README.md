@@ -72,7 +72,14 @@ Urutan konkret:
 - ~~Import/export xlsx-csv~~ ✅ openspout (streaming, tanpa ext-gd) · laporan `detail_gagal` per baris
 - ~~Keanggotaan komunitas~~ ✅ apply mandiri pending · input manual ketua langsung disetujui · duplikat 409 · approve lintas komunitas 403
 
-### FASE 3 — Struktur Organisasi + Konten Publik (US-07–13) ⚡ *quick win — landing page bisa hidup*
+### FASE 3 — Struktur Organisasi + Konten Publik (US-07–13) ✅ selesai ⚡ *landing page bisa hidup*
+
+- ~~CRUD periode/divisi/jabatan~~ ✅ periode baru otomatis mengarsipkan yang lama; periode arsip read-only (409)
+- ~~Penugasan pengurus~~ ✅ duplikat 422; hapus penugasan tidak menyentuh data member
+- ~~`GET /publik/struktur`~~ ✅ plain array per openapi · fallback periode arsip · filter `?komunitas=` · alumni tanpa akun tetap tampil
+- ~~Artikel~~ ✅ draft→published + slug unik auto-suffix; publik list/detail by slug
+- ~~Event & Pengumuman~~ ✅ `?mendatang=true`, batal tak tampil; pengumuman masa tayang + prioritas penting duluan
+- ~~Galeri~~ ✅ album CRUD + multi-upload ≤30 foto ×5MB (openspout-free, Storage::) · cover otomatis foto pertama
 
 ### FASE 4 — Rapat & Presensi QR (US-14–16) · rotasi token HMAC 60 detik (ADR D1)
 

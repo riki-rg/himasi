@@ -32,9 +32,9 @@ class RoleResolver
 
     public function isAdminPusat(User $user): bool
     {
-        return $this->penugasansAktif($user)->contains(
-            fn ($p) => in_array($p->jabatan->nama, ['Ketua Umum', 'Wakil Ketua Umum'], true)
-        );
+        return $user->member?->penugasans()
+            ->whereHas('jabatan', fn ($q) => $q->whereIn('nama', ['Ketua Umum', 'Wakil Ketua Umum']))
+            ->exists() ?? false;
     }
 
     public function isBendahara(User $user): bool
