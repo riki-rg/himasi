@@ -81,7 +81,12 @@ Urutan konkret:
 - ~~Event & Pengumuman~~ ✅ `?mendatang=true`, batal tak tampil; pengumuman masa tayang + prioritas penting duluan
 - ~~Galeri~~ ✅ album CRUD + multi-upload ≤30 foto ×5MB (openspout-free, Storage::) · cover otomatis foto pertama
 
-### FASE 4 — Rapat & Presensi QR (US-14–16) · rotasi token HMAC 60 detik (ADR D1)
+### FASE 4 — Rapat & Presensi QR (US-14–16) ✅ selesai
+
+- ~~CRUD rapat + peserta~~ ✅ qr_secret auto-generate & tidak pernah diekspos; sync member_ids on update
+- ~~Notulen~~ ✅ teks + lampiran PDF ≤10MB via Storage::
+- ~~Absensi QR rotasi 60 detik (ADR D1)~~ ✅ token `{id}|{window}|{hmac}` HMAC-SHA256, zero write DB per rotasi; mapping error 410 QrExpired · 409 SudahAbsen · 422 invalid; jendela aktif = hari-H mulai H-15m s.d. selesai+120m (`App\Services\QrPresensi`)
+- ~~Rekap kehadiran~~ ✅ hitungan hadir/tidak/izin + persentase + rincian
 
 ### FASE 5 — Surat (US-17–19) · penomoran otomatis dari template DB (ADR D4)
 

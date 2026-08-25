@@ -8,6 +8,7 @@ use App\Http\Controllers\GaleriController;
 use App\Http\Controllers\KeanggotaanController;
 use App\Http\Controllers\PengumumanController;
 use App\Http\Controllers\PublikController;
+use App\Http\Controllers\RapatController;
 use App\Http\Controllers\StrukturController;
 use Illuminate\Support\Facades\Route;
 
@@ -82,4 +83,14 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::put('/pengumumans/{pengumuman}', [PengumumanController::class, 'update']);
         Route::delete('/pengumumans/{pengumuman}', [PengumumanController::class, 'destroy']);
     });
+
+    Route::get('/rapat', [RapatController::class, 'index']);
+    Route::post('/rapat', [RapatController::class, 'store']);
+    Route::get('/rapat/{rapat}', [RapatController::class, 'show']);
+    Route::put('/rapat/{rapat}', [RapatController::class, 'update']);
+    Route::delete('/rapat/{rapat}', [RapatController::class, 'destroy']);
+    Route::put('/rapat/{rapat}/notulen', [RapatController::class, 'simpanNotulen']);
+    Route::get('/rapat/{rapat}/qr', [RapatController::class, 'qr']);
+    Route::post('/rapat/{rapat}/absen', [RapatController::class, 'absen']);
+    Route::get('/rapat/{rapat}/rekap', [RapatController::class, 'rekap']);
 });

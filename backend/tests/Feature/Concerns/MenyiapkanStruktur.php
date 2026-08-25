@@ -4,7 +4,10 @@ namespace Tests\Feature\Concerns;
 
 use App\Models\Jabatan;
 use App\Models\Komunitas;
+use App\Models\KomunitasMember;
 use App\Models\Member;
+use App\Models\Rapat;
+use App\Models\RapatMember;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Support\Facades\DB;
@@ -14,6 +17,15 @@ use Illuminate\Support\Facades\DB;
  */
 trait MenyiapkanStruktur
 {
+    /**
+     * Bersihkan cache guard antar-request dalam satu proses test
+     * (sanctum guard menyimpan user ter-resolve sebagai singleton).
+     */
+    protected function resetGuard(): void
+    {
+        $this->app->make('auth')->forgetGuards();
+    }
+
     /**
      * @return array{0: User, 1: Member, 2: string}
      */
@@ -73,5 +85,51 @@ trait MenyiapkanStruktur
             'angkatan' => substr($nim, 0, 4),
             'status' => 'aktif',
         ]);
+    }
+
+    /**
+     * Anggota biasa dengan akun + keanggotaan komunitas disetujui.
+     *
+     * @return array{0: User, 1: Member, 2: string}
+     */
+    protected function anggotaKomunitas(string $kodeKomunitas, string $nim = '2201050088'): array
+    {
+        [$user, $member, $token] = $this->anggotaBiasa($nim);
+
+        KomunitasMember::query()->create([
+            'member_id' => $member->id,
+            'komunitas_id' => Komunitas::idByKode($kodeKomunitas),
+            'status' => 'disetujui',
+        ]);
+
+        return [$user, $member, $token];
+    }
+
+    /**
+     * @param  array<int, int>  $memberIds
+     * @return Rapat
+     */
+    protected function buatRapat(array $memberIds = [], array $overrides = [])
+    {
+        $rapat = Rapat::query()->create([
+            'judul' => 'Rapat Mingguan',
+            'tanggal' => today(),
+            'jam_mulai' => '16:00',
+            'tempat' => 'Lab SI',
+            'agenda' => 'Persiapan workshop',
+            'komunitas_id' => Komunitas::idByKode('BITSI'),
+            'qr_secret' => bin2hex(random_bytes(20)),
+            'user_id' => User::query()->firstOrFail()->id,
+            ...$overrides,
+        ]);
+
+        foreach ($memberIds as $id) {
+            RapatMember::query()->create([
+                'rapat_id' => $rapat->id,
+                'member_id' => $id,
+            ]);
+        }
+
+        return $rapat;
     }
 }
