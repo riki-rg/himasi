@@ -66,7 +66,11 @@ Urutan konkret:
 4. ~~Auth API: register (pending approval) / login / logout / me / password~~ ✅ `app/Http/Controllers/AuthController.php` + feature tests 22 pass
 5. Role & permission per komunitas ✅ Gates (`admin-pusat`, `bendahara`, `sekretaris`, `pengurus-komunitas:{kode}`) dari `App\Services\RoleResolver` — validasi menyeluruh menyusul saat modul dibangun
 
-### FASE 2 — Anggota (US-04–06): CRUD + import/export + keanggotaan komunitas
+### FASE 2 — Anggota (US-04–06) ✅ selesai
+
+- ~~CRUD anggota + search/filter + pagination~~ ✅ `AnggotaController` · cap per_page 100 · filter q/status/angkatan/komunitas
+- ~~Import/export xlsx-csv~~ ✅ openspout (streaming, tanpa ext-gd) · laporan `detail_gagal` per baris
+- ~~Keanggotaan komunitas~~ ✅ apply mandiri pending · input manual ketua langsung disetujui · duplikat 409 · approve lintas komunitas 403
 
 ### FASE 3 — Struktur Organisasi + Konten Publik (US-07–13) ⚡ *quick win — landing page bisa hidup*
 

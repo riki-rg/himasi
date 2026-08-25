@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\MemberResource;
 use App\Models\Komunitas;
 use App\Models\KomunitasMember;
 use App\Models\Member;
@@ -57,7 +58,7 @@ class AuthController extends Controller
             return $member;
         });
 
-        return response()->json($this->memberResource($member), Response::HTTP_CREATED);
+        return response()->json(MemberResource::make($member)->resolve(), Response::HTTP_CREATED);
     }
 
     /**
@@ -130,7 +131,7 @@ class AuthController extends Controller
 
         return response()->json([
             ...$this->userResource($user),
-            'member' => $user->member !== null ? $this->memberResource($user->member) : null,
+            'member' => $user->member !== null ? MemberResource::make($user->member)->resolve() : null,
             'komunitas' => $komunitas,
             'penugasan_aktif' => $penugasanAktif,
         ]);
@@ -170,7 +171,7 @@ class AuthController extends Controller
             }
         });
 
-        return response()->json($this->memberResource($member->refresh()));
+        return response()->json(MemberResource::make($member->refresh())->resolve());
     }
 
     /** PUT /auth/password — ganti password akun login saat ini. */
@@ -221,28 +222,6 @@ class AuthController extends Controller
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
-        ];
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function memberResource(Member $member): array
-    {
-        return [
-            'id' => $member->id,
-            'nim' => $member->nim,
-            'nama' => $member->nama,
-            'prodi' => $member->prodi,
-            'angkatan' => (int) $member->angkatan,
-            'email' => $member->email,
-            'no_hp' => $member->no_hp,
-            'alamat' => $member->alamat,
-            'foto_path' => $member->foto_path,
-            'link_portofolio' => $member->link_portofolio,
-            'link_instagram' => $member->link_instagram,
-            'status' => $member->status,
-            'created_at' => $member->created_at?->toISOString(),
         ];
     }
 }

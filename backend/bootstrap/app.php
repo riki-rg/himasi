@@ -2,7 +2,6 @@
 
 use App\Http\Middleware\EnsureEmailIsVerified;
 use App\Support\Problem;
-use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
@@ -11,6 +10,8 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -45,7 +46,8 @@ return Application::configure(basePath: dirname(__DIR__))
                 $e instanceof Problem => $e,
                 $e instanceof ValidationException => Problem::validation($e->errors()),
                 $e instanceof AuthenticationException => Problem::unauthorized(),
-                $e instanceof AuthorizationException => Problem::forbidden(),
+                $e instanceof AccessDeniedHttpException => Problem::forbidden(),
+                $e instanceof NotFoundHttpException => Problem::notFound(),
                 $e instanceof ModelNotFoundException => Problem::notFound(),
                 default => null,
             };
