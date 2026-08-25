@@ -1,0 +1,132 @@
+# HIMSI UMKU — Ecosystem Development Guide (Universal)
+
+> **Dokumen ini adalah pintu masuk utama untuk AI coding assistant maupun manusia yang baru bergabung mengerjakan project ini.**
+> Terakhir diperbarui: 2026-08-25 · Pemilik: rizz (Mahasiswa SI UMKU)
+
+---
+
+## 🎯 Apa Project Ini?
+
+Satu ekosistem digital untuk **HIMSI** (Himpunan Mahasiswa Sistem Informasi Universitas Muhammadiyah Kudus) beserta dua komunitas di bawahnya:
+
+| # | Aplikasi | Stack | Peran |
+|---|----------|-------|-------|
+| 1 | **Backend API** | Laravel ^13.8 + Breeze (API mode) + Sanctum | Single source of truth — 12 modul |
+| 2 | **Landing page** | Next.js App Router + TS strict + Tailwind v4 | Wajah resmi himpunan, konsumen endpoint `/publik/*` |
+| 3 | **App BitSI** | React SPA (Vite) + TS strict + Tailwind + shadcn/ui | Komunitas tech: Web Dev · IoT · Jaringan · Server |
+| 4 | **App Sibiner** | React SPA (Vite) — share `packages/ui` dengan BitSI | Komunitas literasi: bicara nalar & baca buku |
+
+Frontend #2–#4 dibangun sebagai **monorepo pnpm workspace** (`apps/*` + `packages/ui`).
+
+## 📁 Lokasi Kode & Dokumen
+
+```
+/home/rizz/Documents/projects/hima/     ← ROOT project (dokumentasi + frontend + backend)
+├── README.md                           ← KAMU DI SINI
+├── docs/
+│   ├── prd/
+│   │   ├── backend-api.md              ← PRD 12 modul + ADR D1–D8
+│   │   ├── landing-page.md             ← PRD + ADR L1–L7
+│   │   ├── bitsi-app.md                ← PRD + ADR B1–B8
+│   │   ├── sibiner-app.md              ← PRD + ADR S1–S5
+│   │   └── stories.md                  ← 24 user story (6 fase + epic H), AC Given/When/Then
+│   ├── design/
+│   │   ├── erd.md                      ← skema database lengkap + index strategy
+│   │   ├── struktur-organisasi.md      ← definisi divisi/jabatan + spesifikasi seeder
+│   │   └── wireframes/                 ← 16 wireframe + README index
+│   └── api/openapi.yaml                ← kontrak REST (59 endpoint) — SUMBER KEBENARAN ENDPOINT
+├── frontend/                           ← monorepo pnpm workspace
+│   ├── apps/{landing,bitsi,sibiner}/
+│   └── packages/ui/
+└── backend/                            ← PROJECT LARAVEL (API) — fresh install, Breeze API mode + Sanctum
+    └── app/, database/migrations/, ... ← Fase 1 selesai: skema ERD final + auth /api/v1/auth/*
+
+/home/rizz/himsi                        ← LARAVEL LAMA (arsip, tidak dipakai — jangan disentuh)
+```
+
+## 🚦 URUTAN PEKERJAAN — AI HARUS MULAI DARI SINI
+
+**Jangan asal ngoding. Ikuti urutan ini. Satu fase tuntas (quality gates pass) baru lanjut.**
+
+### FASE 0 — Pemahaman Konteks (wajib sebelum menulis kode apa pun)
+
+1. Baca dokumen ini sampai habis
+2. Baca `docs/prd/backend-api.md` (PRD + ADR — keputusan desain SUDAH TERKUNCI, jangan ubah tanpa izin owner)
+3. Baca `docs/design/erd.md` + `docs/design/struktur-organisasi.md`
+4. Baca `docs/api/openapi.yaml`
+5. ~~Inspeksi kondisi aktual `/home/rizz/himsi`~~ ✅ selesai — backend kini live di `backend/` (fresh install, skema final)
+
+### FASE 1 — Fondasi Backend (stories US-01 s/d US-03)
+
+Urutan konkret:
+
+1. ~~Install Laravel Breeze **API mode** + Sanctum di `backend/`~~ ✅ Laravel 13.26 · prefix `api/v1` · problem+json RFC 7807
+2. ~~Migration skema final sesuai ERD (fresh install → langsung final schema; expand-contract tidak diperlukan karena tanpa data legacy)~~ ✅ 24 tabel + amendment `users.status` enum(pending, aktif) disetujui owner
+3. ~~Seeder struktur standar (definisi final di `docs/design/struktur-organisasi.md`)~~ ✅ 3 komunitas → 5 divisi → 16 jabatan + periode aktif
+4. ~~Auth API: register (pending approval) / login / logout / me / password~~ ✅ `app/Http/Controllers/AuthController.php` + feature tests 22 pass
+5. Role & permission per komunitas ✅ Gates (`admin-pusat`, `bendahara`, `sekretaris`, `pengurus-komunitas:{kode}`) dari `App\Services\RoleResolver` — validasi menyeluruh menyusul saat modul dibangun
+
+### FASE 2 — Anggota (US-04–06): CRUD + import/export + keanggotaan komunitas
+
+### FASE 3 — Struktur Organisasi + Konten Publik (US-07–13) ⚡ *quick win — landing page bisa hidup*
+
+### FASE 4 — Rapat & Presensi QR (US-14–16) · rotasi token HMAC 60 detik (ADR D1)
+
+### FASE 5 — Surat (US-17–19) · penomoran otomatis dari template DB (ADR D4)
+
+### FASE 6 — Keuangan (US-20–22) + Showcase Karya & Kelas (US-23–24)
+
+### FASE 7+ — Frontend (setelah endpoint fase terkait stabil)
+
+1. Scaffold monorepo pnpm workspace → `apps/landing`, `apps/bitsi`, `apps/sibiner`, `packages/ui`
+2. Landing page (wireframe: `docs/design/wireframes/home.md`)
+3. BitSI (mulai dari `/daftar` + dashboard — wireframe tersedia)
+4. Sibiner (mirror pola BitSI)
+
+## 📜 Aturan Main (WAJIB dipatuhi AI)
+
+### Kontrak & Desain
+- **Endpoint mengikuti `docs/api/openapi.yaml`** — path, method, schema, status code. Kalau spec perlu berubah: usulkan dulu, update spec, baru implement
+- **Error format: RFC 7807 problem+json** dengan extension `errors{}` untuk 422
+- **Pagination gaya Laravel**: `{data, meta{current_page,last_page,total}, links}`
+- **ADR terkunci** (D1–D8, L1–L7, B1–B8, S1–S5 di tiap PRD): QR rotasi HMAC tanpa write DB · kas read-only setelah periode arsip · storage lokal via abstraction `Storage::` · dsb. Jangan implementasi bertentangan dengan ADR
+- Bahasa: nama field/kode EN, konten & pesan user-facing **Bahasa Indonesia**
+
+### Teknis
+- Backend: PHP Laravel ^13.8 · model pakai atribut `#[Fillable]` + method `casts()` (konvensi `backend/app/Models` — atribut bawaan Laravel 13)
+- Frontend: TypeScript **strict**, TanStack Query (BitSI/Sibiner), komponen shadcn-style di `packages/ui`
+- Semua URL eksternal via env (`NEXT_PUBLIC_API_URL`, `VITE_API_URL`, dst.) — zero hardcoded domain
+- Money selalu `DECIMAL(12,2)` / string di JSON — **jangan float**
+- Upload: foto ≤5MB, PDF ≤10MB, via `Storage::` abstraction
+
+### Migration Safety
+- Expand-contract: tambah kolom nullable → backfill → baru constrain/drop
+- Setiap migration punya `down()` yang benar
+- Dilarang destructive change pada data existing tanpa persetujuan owner
+
+### Quality Gates (sebelum claim "selesai")
+1. `vendor/bin/pint` / lint bersih
+2. `php artisan test` pass (PHPUnit — tulis test feature per endpoint)
+3. Manual verify endpoint sesuai contoh openapi.yaml
+4. Frontend: `lint` + `typecheck` + `test` + `build` semua hijau
+
+## ✅ Definition of Done per User Story
+
+- [ ] Semua acceptance criteria (GWT) di `docs/prd/stories.md` terpenuhi
+- [ ] Endpoint terdaftar di openapi.yaml & implementasinya konsisten
+- [ ] Test feature menutup happy path + minimal satu error path
+- [ ] State matrix wireframe terhormat (loading/empty/error tidak polos kosong)
+- [ ] Quality gates pass
+
+## 🔑 Fakta Kunci yang Sering Terlupakan
+
+1. Tabel `kas` existing **belum punya kolom nominal** — wajib ditambahkan di Fase 1 refactor
+2. Kolom `jabatan` string di `members` adalah warisan lama → digantikan sistem penugasan dinamis
+3. BitSI = program di bawah **Divisi Pengembangan Diri**; Sibiner = di bawah **Divisi Organisasi** (bukan organisasi paralel)
+4. Registrasi mandiri hanya ada di app **BitSI**; anggota Sibiner di-input manual pengurus
+5. Tagihan iuran TIDAK tampil di app komunitas — cukup lewat panel Laravel (keputusan owner)
+6. Domain belum dibeli — semua URL via env; struktur rencana: `himsiumku.[domain]` + subdomain `bitsi.` `sibiner.` `api.`
+
+## 💬 Cara Bertanya ke Owner (rizz)
+
+Kalau ada keputusan di luar cakupan dokumen: **berhenti, tanyakan** — jangan mengarang sendiri. Konteks pertanyaan selalu sertakan: fase/story mana, dokumen mana yang sudah dibaca.

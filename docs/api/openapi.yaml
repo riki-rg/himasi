@@ -1,0 +1,2137 @@
+# OpenAPI 3.0 — Backend API Website HIMSI UMKU
+# Sumber keputusan: docs/prd/backend-api.md (PRD v1.2) · docs/design/erd.md (ERD v1)
+#
+# Konvensi (dikunci):
+#   - Error  : RFC 7807 application/problem+json (schema "Problem")
+#   - Sukses : resource JSON polos; list memakai pagination Laravel ({data, meta, links})
+#   - Auth   : Bearer token (Laravel Sanctum)
+#   - Versioning : URL prefix /api/v1
+#   - Nama field EN · pesan error Bahasa Indonesia
+
+openapi: "3.0.3"
+info:
+  title: HIMSI UMKU API
+  version: "1.0.0-draft"
+  description: |
+    Backend tunggal untuk 3 client: landing page Next.js (HIMSI),
+    aplikasi React BitSI, dan aplikasi React Sibiner.
+
+    Endpoint tanpa tag `Private` dapat diakses publik (tanpa token).
+servers:
+  - url: https://api.himsi-umku.test/api/v1
+    description: Development
+tags:
+  - name: Auth
+  - name: Publik
+  - name: Struktur Organisasi
+  - name: Anggota
+  - name: Rapat
+  - name: Surat
+  - name: Keuangan
+  - name: Konten Publik
+  - name: Karya
+  - name: Kelas & Materi
+
+security:
+  - bearerAuth: []
+
+paths:
+  # ─────────────────────────────── AUTH ───────────────────────────────
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Registrasi mandiri mahasiswa (open registration)
+      description: Akun baru berstatus menunggu persetujuan admin pusat (ADR D6).
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nim, nama, angkatan, email, password]
+              properties:
+                nim:      { type: string, example: "2101050001" }
+                nama:     { type: string, example: "Rizz" }
+                prodi:    { type: string, example: "Sistem Informasi" }
+                angkatan: { type: integer, example: 2021 }
+                email:    { type: string, format: email }
+                no_hp:    { type: string, example: "081234567890" }
+                password: { type: string, format: password, minLength: 8 }
+                link_portofolio: { type: string, format: uri }
+                link_instagram:  { type: string, format: uri }
+                komunitas:
+                  type: string
+                  enum: [HIMSI, BITSI, SIBINER]
+                  description: Opsional — bila diisi, sekaligus mengajukan keanggotaan komunitas dalam satu transaksi (dipakai app BitSI untuk auto-apply)
+      responses:
+        "201": { description: Terdaftar, menunggu approval, content: { application/json: { schema: { $ref: "#/components/schemas/Member" } } } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login, mendapatkan token Sanctum
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:    { type: string, format: email }
+                password: { type: string, format: password }
+      responses:
+        "200":
+          description: Token diterbitkan
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token: { type: string }
+                  user:  { $ref: "#/components/schemas/User" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "423": { $ref: "#/components/responses/AccountPending" }
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Cabut token saat ini
+      responses:
+        "204": { description: Berhasil logout }
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Profil user login beserta role & komunitasnya
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/User"
+                  - type: object
+                    properties:
+                      member:     { $ref: "#/components/schemas/Member" }
+                      komunitas:
+                        type: array
+                        items: { $ref: "#/components/schemas/Komunitas" }
+                      penugasan_aktif:
+                        type: array
+                        items: { $ref: "#/components/schemas/Penugasan" }
+    patch:
+      tags: [Auth]
+      summary: Update profil sendiri (nama, kontak, tautan, foto)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                nama:            { type: string }
+                email:           { type: string, format: email }
+                no_hp:           { type: string }
+                prodi:           { type: string }
+                alamat:          { type: string }
+                link_portofolio: { type: string, format: uri }
+                link_instagram:  { type: string, format: uri }
+                foto:            { type: string, format: binary, description: Foto profil max 5MB (ADR D5) }
+      responses:
+        "200":
+          description: Profil diperbarui
+          content: { application/json: { schema: { $ref: "#/components/schemas/Member" } } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /auth/password:
+    put:
+      tags: [Auth]
+      summary: Ganti password akun login saat ini
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password_lama, password_baru]
+              properties:
+                password_lama: { type: string, format: password }
+                password_baru: { type: string, format: password, minLength: 8 }
+      responses:
+        "204": { description: Password diganti }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  # ────────────────────────────── PUBLIK ──────────────────────────────
+  /publik/artikels:
+    get:
+      tags: [Publik]
+      summary: Daftar artikel published (landing page)
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PerPage"
+        - name: kategori
+          in: query
+          schema: { type: string }
+        - name: q
+          in: query
+          description: Pencarian judul/isi
+          schema: { type: string }
+      responses:
+        "200": { $ref: "#/components/responses/PaginatedArtikels" }
+
+  /publik/artikels/{slug}:
+    get:
+      tags: [Publik]
+      summary: Detail artikel berdasarkan slug
+      security: []
+      parameters: [{ $ref: "#/components/parameters/Slug" }]
+      responses:
+        "200":
+          description: OK
+          content: { application/json: { schema: { $ref: "#/components/schemas/Artikel" } } }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /publik/events:
+    get:
+      tags: [Publik]
+      summary: Daftar agenda/event published
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - name: komunitas
+          in: query
+          schema: { type: string, enum: [HIMSI, BITSI, SIBINER] }
+        - name: mendatang
+          in: query
+          description: true = hanya event mulai >= hari ini
+          schema: { type: boolean }
+      responses:
+        "200": { $ref: "#/components/responses/PaginatedEvents" }
+
+  /publik/events/{id}:
+    get:
+      tags: [Publik]
+      summary: Detail event published (dipakai halaman /agenda/[id])
+      security: []
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "200":
+          description: OK
+          content: { application/json: { schema: { $ref: "#/components/schemas/Event" } } }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /publik/galeri/albums:
+    get:
+      tags: [Publik]
+      summary: Daftar album galeri
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - name: event_id
+          in: query
+          schema: { type: integer }
+      responses:
+        "200": { $ref: "#/components/responses/PaginatedAlbums" }
+
+  /publik/galeri/albums/{id}:
+    get:
+      tags: [Publik]
+      summary: Detail album + semua foto
+      security: []
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "200":
+          description: OK
+          content: { application/json: { schema: { $ref: "#/components/schemas/GaleriAlbum" } } }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /publik/pengumumans:
+    get:
+      tags: [Publik]
+      summary: Pengumuman aktif (dalam masa tayang)
+      security: []
+      parameters:
+        - name: komunitas
+          in: query
+          schema: { type: string, enum: [HIMSI, BITSI, SIBINER] }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Pengumuman" }
+
+  /publik/struktur:
+    get:
+      tags: [Publik]
+      summary: Struktur organisasi lengkap satu periode (untuk landing page)
+      security: []
+      parameters:
+        - name: periode
+          in: query
+          description: ID periode; kosong = periode aktif
+          schema: { type: integer }
+        - name: komunitas
+          in: query
+          schema: { type: string, enum: [HIMSI, BITSI, SIBINER] }
+      responses:
+        "200":
+          description: Tree divisi > jabatan > penugasan (berisi data member)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    divisi:   { $ref: "#/components/schemas/Divisi" }
+                    jabatan:
+                      type: array
+                      items:
+                        allOf:
+                          - $ref: "#/components/schemas/Jabatan"
+                          - type: object
+                            properties:
+                              pengurus:
+                                type: array
+                                items: { $ref: "#/components/schemas/Member" }
+
+  /publik/proyeks:
+    get:
+      tags: [Publik]
+      summary: Daftar karya published per komunitas (showcase BitSI & rak buku Sibiner — M11)
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PerPage"
+        - name: komunitas
+          in: query
+          schema: { type: string, enum: [HIMSI, BITSI, SIBINER] }
+        - name: q
+          in: query
+          schema: { type: string }
+      responses:
+        "200": { $ref: "#/components/responses/PaginatedProyeks" }
+
+  /publik/proyeks/{slug}:
+    get:
+      tags: [Publik]
+      summary: Detail karya published
+      security: []
+      parameters: [{ $ref: "#/components/parameters/Slug" }]
+      responses:
+        "200":
+          description: OK
+          content: { application/json: { schema: { $ref: "#/components/schemas/Proyek" } } }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /publik/kelass:
+    get:
+      tags: [Publik]
+      summary: Daftar kelas (tanpa materi — materi khusus member disetujui, US-24)
+      security: []
+      parameters:
+        - name: komunitas
+          in: query
+          schema: { type: string, enum: [HIMSI, BITSI, SIBINER] }
+        - name: q
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Kelas" }
+
+  # ─────────────── STRUKTUR ORGANISASI (admin/pengurus) ───────────────
+  /periodes:
+    get:
+      tags: [Struktur Organisasi]
+      summary: Daftar periode kepengurusan
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Periode" }
+    post:
+      tags: [Struktur Organisasi]
+      summary: Buat periode baru
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nama, tanggal_mulai, tanggal_selesai]
+              properties:
+                nama:            { type: string, example: "Kepengurusan 2026-2027" }
+                tanggal_mulai:   { type: string, format: date }
+                tanggal_selesai: { type: string, format: date }
+      responses:
+        "201":
+          description: Dibuat
+          content: { application/json: { schema: { $ref: "#/components/schemas/Periode" } } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /periodes/{id}/arsipkan:
+    post:
+      tags: [Struktur Organisasi]
+      summary: Tutup periode menjadi arsip read-only (ADR D3)
+      description: Semua data terkait periode ini dikunci dari penulisan.
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "200":
+          description: Periode terarsip
+          content: { application/json: { schema: { $ref: "#/components/schemas/Periode" } } }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /periodes/{id}/divisi:
+    get:
+      tags: [Struktur Organisasi]
+      summary: Daftar divisi dalam periode
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Divisi" }
+    post:
+      tags: [Struktur Organisasi]
+      summary: Tambah divisi
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [komunitas_id, nama]
+              properties:
+                komunitas_id: { type: integer }
+                nama:         { type: string, example: "Divisi IT" }
+                urutan:       { type: integer }
+      responses:
+        "201":
+          description: Dibuat
+          content: { application/json: { schema: { $ref: "#/components/schemas/Divisi" } } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /divisi/{id}/jabatan:
+    get:
+      tags: [Struktur Organisasi]
+      summary: Daftar jabatan dalam divisi
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Jabatan" }
+    post:
+      tags: [Struktur Organisasi]
+      summary: Tambah jabatan
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nama]
+              properties:
+                nama:    { type: string, example: "Ketua" }
+                tingkat: { type: string, enum: [utama, staf, anggota], default: staf }
+                urutan:  { type: integer }
+      responses:
+        "201":
+          description: Dibuat
+          content: { application/json: { schema: { $ref: "#/components/schemas/Jabatan" } } }
+
+  /penugasan:
+    post:
+      tags: [Struktur Organisasi]
+      summary: Tunjuk anggota menduduki jabatan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [member_id, jabatan_id, periode_id]
+              properties:
+                member_id: { type: integer }
+                jabatan_id: { type: integer }
+                periode_id: { type: integer }
+      responses:
+        "201":
+          description: Ditugaskan
+          content: { application/json: { schema: { $ref: "#/components/schemas/Penugasan" } } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+    delete:
+      tags: [Struktur Organisasi]
+      summary: Lepaskan penugasan
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "204": { description: Dihapus }
+
+  # ───────────────────────────── ANGGOTA ─────────────────────────────
+  /anggota:
+    get:
+      tags: [Anggota]
+      summary: Daftar anggota (search & filter)
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PerPage"
+        - name: q
+          in: query
+          description: Cari nama/NIM
+          schema: { type: string }
+        - name: status
+          in: query
+          schema: { type: string, enum: [aktif, nonaktif, alumni] }
+        - name: angkatan
+          in: query
+          schema: { type: integer }
+        - name: komunitas
+          in: query
+          schema: { type: string, enum: [HIMSI, BITSI, SIBINER] }
+      responses:
+        "200": { $ref: "#/components/responses/PaginatedMembers" }
+    post:
+      tags: [Anggota]
+      summary: Tambah anggota manual
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MemberWritable" }
+      responses:
+        "201":
+          description: Dibuat
+          content: { application/json: { schema: { $ref: "#/components/schemas/Member" } } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /anggota/{id}:
+    get:
+      tags: [Anggota]
+      summary: Detail anggota
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "200":
+          description: OK
+          content: { application/json: { schema: { $ref: "#/components/schemas/Member" } } }
+        "404": { $ref: "#/components/responses/NotFound" }
+    put:
+      tags: [Anggota]
+      summary: Update anggota
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MemberWritable" }
+      responses:
+        "200":
+          description: Diupdate
+          content: { application/json: { schema: { $ref: "#/components/schemas/Member" } } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+    delete:
+      tags: [Anggota]
+      summary: Hapus anggota
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "204": { description: Dihapus }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /anggota/import:
+    post:
+      tags: [Anggota]
+      summary: Import massal dari Excel/CSV
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: string, format: binary }
+      responses:
+        "200":
+          description: Ringkasan hasil import
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  berhasil:  { type: integer, example: 120 }
+                  gagal:     { type: integer, example: 2 }
+                  detail_gagal:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        baris:  { type: integer }
+                        alasan: { type: string }
+
+  /anggota/export:
+    get:
+      tags: [Anggota]
+      summary: Export daftar anggota (xlsx/csv)
+      parameters:
+        - name: format
+          in: query
+          schema: { type: string, enum: [xlsx, csv], default: xlsx }
+      responses:
+        "200":
+          description: File unduhan
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet: {}
+            text/csv: {}
+
+  /keanggotaan:
+    post:
+      tags: [Anggota]
+      summary: Ajukan keanggotaan komunitas / tambah anggota manual (ADR D6)
+      description: |
+        Tanpa `member_id` = apply mandiri (status `pending`, menunggu ketua).
+        Dengan `member_id` (khusus admin/ketua komunitas terkait) = input manual,
+        status langsung `disetujui` — dipakai pengurus Sibiner (PRD sibiner §2).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [komunitas]
+              properties:
+                komunitas: { type: string, enum: [HIMSI, BITSI, SIBINER] }
+                member_id: { type: integer, description: Opsional — hanya admin/ketua komunitas terkait }
+      responses:
+        "201":
+          description: Terdaftar
+          content: { application/json: { schema: { $ref: "#/components/schemas/KeanggotaanKomunitas" } } }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /keanggotaan/{id}:
+    patch:
+      tags: [Anggota]
+      summary: Setujui/tolak pendaftaran komunitas (ADR D6)
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: { type: string, enum: [disetujui, ditolak] }
+      responses:
+        "200":
+          description: Status diperbarui
+          content: { application/json: { schema: { $ref: "#/components/schemas/KeanggotaanKomunitas" } } }
+    delete:
+      tags: [Anggota]
+      summary: Hapus keanggotaan komunitas (ketua komunitas / admin)
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "204": { description: Dihapus }
+
+  # ────────────────────────────── RAPAT ──────────────────────────────
+  /rapat:
+    get:
+      tags: [Rapat]
+      summary: Daftar rapat
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - name: komunitas
+          in: query
+          schema: { type: string, enum: [HIMSI, BITSI, SIBINER] }
+        - name: status
+          in: query
+          schema: { type: string, enum: [dijadwalkan, selesai, dibatalkan] }
+      responses:
+        "200": { $ref: "#/components/responses/PaginatedRapats" }
+    post:
+      tags: [Rapat]
+      summary: Buat jadwal rapat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RapatWritable" }
+      responses:
+        "201":
+          description: Dibuat (qr_secret digenerate otomatis)
+          content: { application/json: { schema: { $ref: "#/components/schemas/Rapat" } } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /rapat/{id}:
+    get:
+      tags: [Rapat]
+      summary: Detail rapat + peserta + rekap kehadiran
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "200":
+          description: OK
+          content: { application/json: { schema: { $ref: "#/components/schemas/Rapat" } } }
+        "404": { $ref: "#/components/responses/NotFound" }
+    put:
+      tags: [Rapat]
+      summary: Update rapat
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RapatWritable" }
+      responses:
+        "200":
+          description: Diupdate
+          content: { application/json: { schema: { $ref: "#/components/schemas/Rapat" } } }
+    delete:
+      tags: [Rapat]
+      summary: Hapus/batalkan rapat
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "204": { description: Dihapus }
+
+  /rapat/{id}/notulen:
+    put:
+      tags: [Rapat]
+      summary: Tulis/update notulen + lampiran
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                notulen:       { type: string }
+                lampiran_file: { type: string, format: binary }
+      responses:
+        "200":
+          description: Notulen tersimpan
+          content: { application/json: { schema: { $ref: "#/components/schemas/Rapat" } } }
+
+  /rapat/{id}/qr:
+    get:
+      tags: [Rapat]
+      summary: Payload QR absensi berotasi 60 detik (ADR D1)
+      description: |
+        Hanya pengurus penyelenggara. Server menghitung
+        HMAC-SHA256(qr_secret, floor(unixtime/60)) — tanpa write DB.
+        Client menampilkan QR dan refresh tiap <= 60 detik.
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "200":
+          description: Payload token saat ini
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  payload:    { type: string, example: "5|MTcxOTI...|a1b2c3..." }
+                  expires_in: { type: integer, example: 60 }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /rapat/{id}/absen:
+    post:
+      tags: [Rapat]
+      summary: Presensi member via scan QR
+      description: Token divalidasi server (window aktif + HMAC match). Satu kali per member.
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token: { type: string }
+                catatan: { type: string, description: mis. alasan izin }
+      responses:
+        "200":
+          description: Kehadiran tercatat
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kehadiran: { type: string, example: hadir }
+                  waktu:     { type: string, format: date-time }
+        "410": { $ref: "#/components/responses/QrExpired" }
+        "409": { $ref: "#/components/responses/SudahAbsen" }
+
+  /rapat/{id}/rekap:
+    get:
+      tags: [Rapat]
+      summary: Rekap kehadiran rapat
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_peserta: { type: integer }
+                  hadir: { type: integer }
+                  tidak_hadir: { type: integer }
+                  izin: { type: integer }
+                  persentase: { type: number, format: float }
+                  rincian:
+                    type: array
+                    items: { $ref: "#/components/schemas/RapatPeserta" }
+
+  # ────────────────────────────── SURAT ──────────────────────────────
+  /surat:
+    get:
+      tags: [Surat]
+      summary: Arsip surat (filter jenis & periode)
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - name: jenis
+          in: query
+          schema: { type: string, enum: [masuk, keluar] }
+        - name: periode_id
+          in: query
+          schema: { type: integer }
+        - name: q
+          in: query
+          description: Cari nomor/perihal/pihak
+          schema: { type: string }
+      responses:
+        "200": { $ref: "#/components/responses/PaginatedSurats" }
+    post:
+      tags: [Surat]
+      summary: Catat surat baru (masuk atau keluar)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/SuratWritable"
+                - type: object
+                  properties:
+                    file_scan: { type: string, format: binary, description: PDF/JPG max 10MB (ADR D5) }
+      responses:
+        "201":
+          description: Tercatat
+          content: { application/json: { schema: { $ref: "#/components/schemas/Surat" } } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /surat/{id}:
+    get:
+      tags: [Surat]
+      summary: Detail surat
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "200":
+          description: OK
+          content: { application/json: { schema: { $ref: "#/components/schemas/Surat" } } }
+        "404": { $ref: "#/components/responses/NotFound" }
+    put:
+      tags: [Surat]
+      summary: Update surat
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/SuratWritable" } } }
+      responses:
+        "200":
+          description: Diupdate
+          content: { application/json: { schema: { $ref: "#/components/schemas/Surat" } } }
+    delete:
+      tags: [Surat]
+      summary: Hapus surat dari arsip
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "204": { description: Dihapus }
+
+  /surat/{id}/status:
+    post:
+      tags: [Surat]
+      summary: Alur status surat keluar (draft-review-disetujui-terkirim)
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: { type: string, enum: [review, disetujui, terkirim] }
+                catatan: { type: string }
+      responses:
+        "200":
+          description: Status berubah
+          content: { application/json: { schema: { $ref: "#/components/schemas/Surat" } } }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /surat/templates:
+    get:
+      tags: [Surat]
+      summary: Template penomoran per jenis surat dalam satu periode (ADR D4)
+      parameters: [{ $ref: "#/components/parameters/PeriodeQuery" }]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/SuratTemplate" }
+    post:
+      tags: [Surat]
+      summary: Atur template penomoran
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [periode_id, nama_jenis, format]
+              properties:
+                periode_id: { type: integer }
+                nama_jenis: { type: string, example: proposal }
+                format: { type: string, example: "{urut}/HIMSI/UMKU/{romawi}/{tahun}" }
+      responses:
+        "201":
+          description: Dibuat
+          content: { application/json: { schema: { $ref: "#/components/schemas/SuratTemplate" } } }
+
+  # ────────────────── KONTEN PUBLIK (admin/pengurus) ──────────────────
+  /artikels:
+    get:
+      tags: [Konten Publik]
+      summary: Daftar semua artikel termasuk draft
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PerPage"
+        - name: status
+          in: query
+          schema: { type: string, enum: [draft, published] }
+        - name: kategori
+          in: query
+          schema: { type: string }
+        - name: q
+          in: query
+          schema: { type: string }
+      responses:
+        "200": { $ref: "#/components/responses/PaginatedArtikels" }
+    post:
+      tags: [Konten Publik]
+      summary: Tulis artikel baru (US-10)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/ArtikelWritable"
+                - type: object
+                  properties:
+                    cover: { type: string, format: binary, description: Cover max 5MB (ADR D5) }
+      responses:
+        "201":
+          description: Dibuat
+          content: { application/json: { schema: { $ref: "#/components/schemas/Artikel" } } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /artikels/{id}:
+    get:
+      tags: [Konten Publik]
+      summary: Detail artikel (termasuk draft milik sendiri)
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "200":
+          description: OK
+          content: { application/json: { schema: { $ref: "#/components/schemas/Artikel" } } }
+        "404": { $ref: "#/components/responses/NotFound" }
+    put:
+      tags: [Konten Publik]
+      summary: Update artikel
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/ArtikelWritable" } } }
+      responses:
+        "200":
+          description: Diupdate
+          content: { application/json: { schema: { $ref: "#/components/schemas/Artikel" } } }
+    delete:
+      tags: [Konten Publik]
+      summary: Hapus artikel
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "204": { description: Dihapus }
+
+  /events:
+    get:
+      tags: [Konten Publik]
+      summary: Daftar semua event termasuk draft/batal
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - name: komunitas
+          in: query
+          schema: { type: string, enum: [HIMSI, BITSI, SIBINER] }
+        - name: status
+          in: query
+          schema: { type: string, enum: [draft, published, batal] }
+      responses:
+        "200": { $ref: "#/components/responses/PaginatedEvents" }
+    post:
+      tags: [Konten Publik]
+      summary: Buat event (US-11)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/EventWritable"
+                - type: object
+                  properties:
+                    poster: { type: string, format: binary, description: Poster max 5MB }
+      responses:
+        "201":
+          description: Dibuat
+          content: { application/json: { schema: { $ref: "#/components/schemas/Event" } } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /events/{id}:
+    get:
+      tags: [Konten Publik]
+      summary: Detail event
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "200":
+          description: OK
+          content: { application/json: { schema: { $ref: "#/components/schemas/Event" } } }
+        "404": { $ref: "#/components/responses/NotFound" }
+    put:
+      tags: [Konten Publik]
+      summary: Update event
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/EventWritable" } } }
+      responses:
+        "200":
+          description: Diupdate
+          content: { application/json: { schema: { $ref: "#/components/schemas/Event" } } }
+    delete:
+      tags: [Konten Publik]
+      summary: Hapus event
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "204": { description: Dihapus }
+
+  /galeri/albums:
+    get:
+      tags: [Konten Publik]
+      summary: Daftar semua album (termasuk yang belum berfoto)
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - name: event_id
+          in: query
+          schema: { type: integer }
+      responses:
+        "200": { $ref: "#/components/responses/PaginatedAlbums" }
+    post:
+      tags: [Konten Publik]
+      summary: Buat album (US-13)
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/AlbumWritable" } } }
+      responses:
+        "201":
+          description: Dibuat
+          content: { application/json: { schema: { $ref: "#/components/schemas/GaleriAlbum" } } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /galeri/albums/{id}:
+    put:
+      tags: [Konten Publik]
+      summary: Update album
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/AlbumWritable" } } }
+      responses:
+        "200":
+          description: Diupdate
+          content: { application/json: { schema: { $ref: "#/components/schemas/GaleriAlbum" } } }
+    delete:
+      tags: [Konten Publik]
+      summary: Hapus album beserta fotonya (cascade)
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "204": { description: Dihapus }
+
+  /galeri/albums/{id}/fotos:
+    post:
+      tags: [Konten Publik]
+      summary: Upload banyak foto sekaligus ke album (multi-upload, US-13)
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [files]
+              properties:
+                files:
+                  type: array
+                  items: { type: string, format: binary, description: Foto max 5MB per file }
+                caption: { type: string }
+      responses:
+        "201":
+          description: Foto tersimpan
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/GaleriFoto" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /galeri/fotos/{id}:
+    put:
+      tags: [Konten Publik]
+      summary: Update caption/urutan foto
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                caption: { type: string }
+                urutan:  { type: integer }
+      responses:
+        "200":
+          description: Diupdate
+          content: { application/json: { schema: { $ref: "#/components/schemas/GaleriFoto" } } }
+    delete:
+      tags: [Konten Publik]
+      summary: Hapus foto dari album
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "204": { description: Dihapus }
+
+  /pengumumans:
+    get:
+      tags: [Konten Publik]
+      summary: Daftar semua pengumuman termasuk kadaluarsa
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - name: komunitas
+          in: query
+          schema: { type: string, enum: [HIMSI, BITSI, SIBINER] }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Pengumuman" }
+    post:
+      tags: [Konten Publik]
+      summary: Terbitkan pengumuman (US-12)
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/PengumumanWritable" } } }
+      responses:
+        "201":
+          description: Dibuat
+          content: { application/json: { schema: { $ref: "#/components/schemas/Pengumuman" } } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /pengumumans/{id}:
+    put:
+      tags: [Konten Publik]
+      summary: Update pengumuman
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/PengumumanWritable" } } }
+      responses:
+        "200":
+          description: Diupdate
+          content: { application/json: { schema: { $ref: "#/components/schemas/Pengumuman" } } }
+    delete:
+      tags: [Konten Publik]
+      summary: Hapus pengumuman
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "204": { description: Dihapus }
+
+  # ──────────────────────────── KARYA (M11) ───────────────────────────
+  /proyeks:
+    get:
+      tags: [Karya]
+      summary: Daftar karya komunitas (draft + published)
+      description: Pengurus komunitas otomatis di-scope ke komunitasnya — minta komunitas lain → 403. Admin pusat bebas (US-23).
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PerPage"
+        - name: komunitas
+          in: query
+          schema: { type: string, enum: [HIMSI, BITSI, SIBINER] }
+        - name: status
+          in: query
+          schema: { type: string, enum: [draft, published] }
+        - name: q
+          in: query
+          schema: { type: string }
+      responses:
+        "200": { $ref: "#/components/responses/PaginatedProyeks" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [Karya]
+      summary: Tambah karya baru
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/ProyekWritable"
+                - type: object
+                  properties:
+                    thumbnail: { type: string, format: binary, description: Thumbnail max 5MB (ADR D5) }
+      responses:
+        "201":
+          description: Dibuat (berstatus draft)
+          content: { application/json: { schema: { $ref: "#/components/schemas/Proyek" } } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /proyeks/{id}:
+    get:
+      tags: [Karya]
+      summary: Detail karya
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "200":
+          description: OK
+          content: { application/json: { schema: { $ref: "#/components/schemas/Proyek" } } }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    put:
+      tags: [Karya]
+      summary: Update karya (termasuk publish/unpublish via status)
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/ProyekWritable" } } }
+      responses:
+        "200":
+          description: Diupdate
+          content: { application/json: { schema: { $ref: "#/components/schemas/Proyek" } } }
+    delete:
+      tags: [Karya]
+      summary: Hapus karya
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "204": { description: Dihapus }
+
+  # ─────────────────────── KELAS & MATERI (M12) ───────────────────────
+  /kelass:
+    get:
+      tags: [Kelas & Materi]
+      summary: Daftar kelas untuk pengelolaan
+      parameters:
+        - name: komunitas
+          in: query
+          schema: { type: string, enum: [HIMSI, BITSI, SIBINER] }
+        - name: q
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Kelas" }
+    post:
+      tags: [Kelas & Materi]
+      summary: Buat kelas (US-24)
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/KelasWritable" } } }
+      responses:
+        "201":
+          description: Dibuat
+          content: { application/json: { schema: { $ref: "#/components/schemas/Kelas" } } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /kelass/{id}:
+    get:
+      tags: [Kelas & Materi]
+      summary: Detail kelas + daftar materi
+      description: |
+        Materi hanya dikembalikan untuk member komunitas terkait yang sudah disetujui;
+        non-member → 403 problem+json (US-24). Publik memakai `/publik/kelass`.
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "200":
+          description: OK
+          content: { application/json: { schema: { $ref: "#/components/schemas/Kelas" } } }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    put:
+      tags: [Kelas & Materi]
+      summary: Update kelas
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/KelasWritable" } } }
+      responses:
+        "200":
+          description: Diupdate
+          content: { application/json: { schema: { $ref: "#/components/schemas/Kelas" } } }
+    delete:
+      tags: [Kelas & Materi]
+      summary: Hapus kelas beserta materinya
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "204": { description: Dihapus }
+
+  /kelass/{id}/materis:
+    post:
+      tags: [Kelas & Materi]
+      summary: Tambah materi ke kelas (file upload atau link eksternal)
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/MateriWritable"
+                - type: object
+                  properties:
+                    file: { type: string, format: binary, description: Wajib bila tipe=file — max 10MB (ADR D5) }
+      responses:
+        "201":
+          description: Materi tersimpan
+          content: { application/json: { schema: { $ref: "#/components/schemas/Materi" } } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /materis/{id}:
+    put:
+      tags: [Kelas & Materi]
+      summary: Update materi (judul/tipe/link/urutan)
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/MateriWritable" } } }
+      responses:
+        "200":
+          description: Diupdate
+          content: { application/json: { schema: { $ref: "#/components/schemas/Materi" } } }
+    delete:
+      tags: [Kelas & Materi]
+      summary: Hapus materi
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "204": { description: Dihapus }
+
+  # ───────────────────────────── KEUANGAN ─────────────────────────────
+  /kas:
+    get:
+      tags: [Keuangan]
+      summary: Daftar transaksi kas (bendahara & admin — ADR D2)
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - name: periode_id
+          in: query
+          schema: { type: integer }
+        - name: tipe
+          in: query
+          schema: { type: string, enum: [pemasukan, pengeluaran] }
+        - name: tanggal_dari
+          in: query
+          schema: { type: string, format: date }
+        - name: tanggal_sampai
+          in: query
+          schema: { type: string, format: date }
+      responses:
+        "200": { $ref: "#/components/responses/PaginatedKas" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [Keuangan]
+      summary: Catat transaksi
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/KasWritable"
+                - type: object
+                  properties:
+                    bukti_foto: { type: string, format: binary, description: Foto nota/kwitansi max 5MB }
+      responses:
+        "201":
+          description: Tercatat
+          content: { application/json: { schema: { $ref: "#/components/schemas/KasTransaksi" } } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /kas/{id}:
+    get:
+      tags: [Keuangan]
+      summary: Detail transaksi
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "200":
+          description: OK
+          content: { application/json: { schema: { $ref: "#/components/schemas/KasTransaksi" } } }
+        "404": { $ref: "#/components/responses/NotFound" }
+    put:
+      tags: [Keuangan]
+      summary: Update transaksi
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/KasWritable" } } }
+      responses:
+        "200":
+          description: Diupdate
+          content: { application/json: { schema: { $ref: "#/components/schemas/KasTransaksi" } } }
+    delete:
+      tags: [Keuangan]
+      summary: Hapus transaksi
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "204": { description: Dihapus }
+
+  /kas/rekap:
+    get:
+      tags: [Keuangan]
+      summary: Rekap agregat (pengurus lain boleh lihat — ADR D2)
+      parameters:
+        - name: periode_id
+          in: query
+          schema: { type: integer }
+        - name: kelompok
+          in: query
+          description: Agregasi per bulan atau per kategori
+          schema: { type: string, enum: [bulan, kategori], default: bulan }
+      responses:
+        "200":
+          description: Total masuk/keluar + breakdown
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_pemasukan:  { type: number, example: 2500000 }
+                  total_pengeluaran: { type: number, example: 1800000 }
+                  saldo: { type: number, example: 700000 }
+                  breakdown:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        label: { type: string }
+                        nilai: { type: number }
+
+  /iuran:
+    get:
+      tags: [Keuangan]
+      summary: Daftar iuran/tagihan
+      parameters: [{ $ref: "#/components/parameters/PeriodeQuery" }]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Iuran" }
+    post:
+      tags: [Keuangan]
+      summary: Buat iuran (otomatis generate tagihan per anggota terkait)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nama, jumlah, periode_id, tenggat]
+              properties:
+                nama:       { type: string, example: "Kas Bulanan Februari" }
+                jumlah:     { type: number, example: 25000 }
+                periode_id: { type: integer }
+                komunitas_id: { type: integer, nullable: true }
+                tenggat:    { type: string, format: date }
+      responses:
+        "201":
+          description: Dibuat
+          content: { application/json: { schema: { $ref: "#/components/schemas/Iuran" } } }
+
+  /iuran/{id}/tagihan:
+    get:
+      tags: [Keuangan]
+      summary: Daftar tagihan per anggota untuk satu iuran
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/IuranTagihan" }
+
+  /iuran/tagihan/{id}/lunasi:
+    post:
+      tags: [Keuangan]
+      summary: Tandai lunas + catat transaksi kas otomatis
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "200":
+          description: Lunas, transaksi kas dibuat
+          content: { application/json: { schema: { $ref: "#/components/schemas/IuranTagihan" } } }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Laravel Sanctum personal access token
+
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema: { type: integer }
+    Slug:
+      name: slug
+      in: path
+      required: true
+      schema: { type: string }
+    Page:
+      name: page
+      in: query
+      schema: { type: integer, default: 1 }
+    PerPage:
+      name: per_page
+      in: query
+      schema: { type: integer, default: 15, maximum: 100 }
+    PeriodeQuery:
+      name: periode_id
+      in: query
+      description: Kosong = periode aktif
+      schema: { type: integer }
+
+  responses:
+    ValidationError:
+      description: Validasi gagal (RFC 7807 + extension `errors`)
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+          example:
+            type: "https://api.himsi-umku.test/problems/validation"
+            title: "Data tidak valid"
+            status: 422
+            detail: "Beberapa field tidak sesuai."
+            instance: "/api/v1/auth/register"
+            errors:
+              nim: ["NIM sudah terdaftar."]
+              email: ["Email harus valid."]
+    Unauthorized:
+      description: Belum login / token invalid
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+    AccountPending:
+      description: Akun menunggu persetujuan admin
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+    Forbidden:
+      description: Tidak punya izin (role tidak cukup)
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+    NotFound:
+      description: Resource tidak ditemukan
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+    Conflict:
+      description: Konflik state (mis. absen dua kali, alur status salah)
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+    QrExpired:
+      description: Token QR sudah kedaluwarsa (rotasi 60s)
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+    SudahAbsen:
+      description: Member sudah melakukan presensi
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+    PaginatedArtikels:
+      description: OK
+      content:
+        application/json:
+          schema:
+            allOf:
+              - type: object
+                properties:
+                  data: { type: array, items: { $ref: "#/components/schemas/Artikel" } }
+              - $ref: "#/components/schemas/LaravelPagination"
+    PaginatedEvents:
+      description: OK
+      content:
+        application/json:
+          schema:
+            allOf:
+              - type: object
+                properties:
+                  data: { type: array, items: { $ref: "#/components/schemas/Event" } }
+              - $ref: "#/components/schemas/LaravelPagination"
+    PaginatedAlbums:
+      description: OK
+      content:
+        application/json:
+          schema:
+            allOf:
+              - type: object
+                properties:
+                  data: { type: array, items: { $ref: "#/components/schemas/GaleriAlbum" } }
+              - $ref: "#/components/schemas/LaravelPagination"
+    PaginatedMembers:
+      description: OK
+      content:
+        application/json:
+          schema:
+            allOf:
+              - type: object
+                properties:
+                  data: { type: array, items: { $ref: "#/components/schemas/Member" } }
+              - $ref: "#/components/schemas/LaravelPagination"
+    PaginatedRapats:
+      description: OK
+      content:
+        application/json:
+          schema:
+            allOf:
+              - type: object
+                properties:
+                  data: { type: array, items: { $ref: "#/components/schemas/Rapat" } }
+              - $ref: "#/components/schemas/LaravelPagination"
+    PaginatedSurats:
+      description: OK
+      content:
+        application/json:
+          schema:
+            allOf:
+              - type: object
+                properties:
+                  data: { type: array, items: { $ref: "#/components/schemas/Surat" } }
+              - $ref: "#/components/schemas/LaravelPagination"
+    PaginatedKas:
+      description: OK
+      content:
+        application/json:
+          schema:
+            allOf:
+              - type: object
+                properties:
+                  data: { type: array, items: { $ref: "#/components/schemas/KasTransaksi" } }
+              - $ref: "#/components/schemas/LaravelPagination"
+    PaginatedProyeks:
+      description: OK
+      content:
+        application/json:
+          schema:
+            allOf:
+              - type: object
+                properties:
+                  data: { type: array, items: { $ref: "#/components/schemas/Proyek" } }
+              - $ref: "#/components/schemas/LaravelPagination"
+
+  schemas:
+    Problem:
+      type: object
+      description: RFC 7807 Problem Details
+      required: [type, title, status]
+      properties:
+        type:     { type: string, format: uri, example: "https://api.himsi-umku.test/problems/not-found" }
+        title:    { type: string, example: "Tidak ditemukan" }
+        status:   { type: integer, example: 404 }
+        detail:   { type: string, example: "Resource yang diminta tidak ada." }
+        instance: { type: string, example: "/api/v1/publik/artikels/abc" }
+        errors:
+          type: object
+          description: Extension member — error per-field (hanya pada 422)
+          additionalProperties:
+            type: array
+            items: { type: string }
+
+    LaravelPagination:
+      type: object
+      properties:
+        meta:
+          type: object
+          properties:
+            current_page: { type: integer }
+            last_page:    { type: integer }
+            per_page:     { type: integer }
+            total:        { type: integer }
+            from:         { type: integer, nullable: true }
+            to:           { type: integer, nullable: true }
+        links:
+          type: object
+          properties:
+            first: { type: string, nullable: true }
+            last:  { type: string, nullable: true }
+            prev:  { type: string, nullable: true }
+            next:  { type: string, nullable: true }
+
+    User:
+      type: object
+      properties:
+        id:    { type: integer }
+        name:  { type: string }
+        email: { type: string, format: email }
+
+    Member:
+      type: object
+      properties:
+        id:              { type: integer }
+        nim:             { type: string }
+        nama:            { type: string }
+        prodi:           { type: string, nullable: true }
+        angkatan:        { type: integer }
+        email:           { type: string, nullable: true }
+        no_hp:           { type: string, nullable: true }
+        alamat:          { type: string, nullable: true }
+        foto_path:       { type: string, nullable: true }
+        link_portofolio: { type: string, nullable: true }
+        link_instagram:  { type: string, nullable: true }
+        status:          { type: string, enum: [aktif, nonaktif, alumni] }
+        created_at:      { type: string, format: date-time }
+
+    MemberWritable:
+      type: object
+      required: [nim, nama, angkatan]
+      properties:
+        nim:             { type: string }
+        nama:            { type: string }
+        prodi:           { type: string }
+        angkatan:        { type: integer }
+        email:           { type: string }
+        no_hp:           { type: string }
+        alamat:          { type: string }
+        foto_path:       { type: string }
+        link_portofolio: { type: string, format: uri }
+        link_instagram:  { type: string, format: uri }
+        status:          { type: string, enum: [aktif, nonaktif, alumni] }
+
+    Komunitas:
+      type: object
+      properties:
+        id:         { type: integer }
+        kode:       { type: string, enum: [HIMSI, BITSI, SIBINER] }
+        nama:       { type: string }
+        deskripsi:  { type: string }
+        logo_path:  { type: string, nullable: true }
+
+    KeanggotaanKomunitas:
+      type: object
+      properties:
+        id:             { type: integer }
+        member:         { $ref: "#/components/schemas/Member" }
+        komunitas:      { $ref: "#/components/schemas/Komunitas" }
+        status:         { type: string, enum: [pending, disetujui, ditolak] }
+        disetujui_pada: { type: string, format: date-time, nullable: true }
+
+    Periode:
+      type: object
+      properties:
+        id:              { type: integer }
+        nama:            { type: string }
+        tanggal_mulai:   { type: string, format: date }
+        tanggal_selesai: { type: string, format: date }
+        status:          { type: string, enum: [aktif, arsip] }
+
+    Divisi:
+      type: object
+      properties:
+        id:           { type: integer }
+        periode_id:   { type: integer }
+        komunitas_id: { type: integer }
+        nama:         { type: string }
+        urutan:       { type: integer }
+
+    Jabatan:
+      type: object
+      properties:
+        id:        { type: integer }
+        divisi_id: { type: integer }
+        nama:      { type: string }
+        tingkat:   { type: string, enum: [utama, staf, anggota] }
+        urutan:    { type: integer }
+
+    Penugasan:
+      type: object
+      properties:
+        id:         { type: integer }
+        member_id:  { type: integer }
+        jabatan_id: { type: integer }
+        periode_id: { type: integer }
+
+    Artikel:
+      type: object
+      properties:
+        id:           { type: integer }
+        judul:        { type: string }
+        slug:         { type: string }
+        konten:       { type: string }
+        cover_path:   { type: string, nullable: true }
+        kategori:     { type: string, nullable: true }
+        tags:         { type: array, items: { type: string } }
+        status:       { type: string, enum: [draft, published] }
+        published_at: { type: string, format: date-time, nullable: true }
+        author:       { $ref: "#/components/schemas/User" }
+
+    Event:
+      type: object
+      properties:
+        id:           { type: integer }
+        judul:        { type: string }
+        deskripsi:    { type: string }
+        poster_path:  { type: string, nullable: true }
+        lokasi:       { type: string }
+        mulai:        { type: string, format: date-time }
+        selesai:      { type: string, format: date-time }
+        komunitas_id: { type: integer, nullable: true }
+        status:       { type: string, enum: [draft, published, batal] }
+
+    GaleriAlbum:
+      type: object
+      properties:
+        id:          { type: integer }
+        judul:       { type: string }
+        deskripsi:   { type: string }
+        cover_path:  { type: string, nullable: true }
+        event_id:    { type: integer, nullable: true }
+        fotos:
+          type: array
+          items: { $ref: "#/components/schemas/GaleriFoto" }
+
+    GaleriFoto:
+      type: object
+      properties:
+        id:      { type: integer }
+        path:    { type: string }
+        caption: { type: string, nullable: true }
+        urutan:  { type: integer }
+
+    Pengumuman:
+      type: object
+      properties:
+        id:             { type: integer }
+        judul:          { type: string }
+        isi:            { type: string }
+        prioritas:      { type: string, enum: [normal, penting] }
+        tayang_mulai:   { type: string, format: date }
+        tayang_selesai: { type: string, format: date, nullable: true }
+        komunitas_id:   { type: integer, nullable: true }
+
+    Rapat:
+      type: object
+      properties:
+        id:            { type: integer }
+        judul:         { type: string }
+        tanggal:       { type: string, format: date }
+        jam_mulai:     { type: string, example: "19:00" }
+        jam_selesai:   { type: string, nullable: true, example: "21:00" }
+        tempat:        { type: string }
+        agenda:        { type: string }
+        notulen:       { type: string, nullable: true }
+        lampiran_path: { type: string, nullable: true }
+        komunitas_id:  { type: integer, nullable: true }
+        status:        { type: string, enum: [dijadwalkan, selesai, dibatalkan] }
+        window_aktif:
+          type: boolean
+          description: Dihitung server — true saat jendela absensi QR aktif (dipakai UI tombol Absen)
+        peserta:
+          type: array
+          items: { $ref: "#/components/schemas/RapatPeserta" }
+
+    RapatWritable:
+      type: object
+      required: [judul, tanggal, jam_mulai, tempat]
+      properties:
+        judul:        { type: string }
+        tanggal:      { type: string, format: date }
+        jam_mulai:    { type: string }
+        jam_selesai:  { type: string }
+        tempat:       { type: string, description: Nama ruangan atau link online }
+        agenda:       { type: string }
+        komunitas_id: { type: integer, nullable: true }
+        member_ids:
+          type: array
+          description: Peserta rapat
+          items: { type: integer }
+
+    RapatPeserta:
+      type: object
+      properties:
+        member:    { $ref: "#/components/schemas/Member" }
+        kehadiran: { type: string, enum: [hadir, tidak, izin] }
+        catatan:   { type: string, nullable: true }
+
+    Surat:
+      type: object
+      properties:
+        id:                { type: integer }
+        jenis:             { type: string, enum: [masuk, keluar] }
+        nomor_surat:       { type: string }
+        tanggal_surat:     { type: string, format: date }
+        pihak:             { type: string }
+        perihal:           { type: string }
+        file_path:         { type: string, nullable: true }
+        disposisi:         { type: string, nullable: true }
+        status:            { type: string, enum: [draft, review, disetujui, terkirim], nullable: true }
+        periode_id:        { type: integer }
+        surat_template_id: { type: integer, nullable: true }
+
+    SuratWritable:
+      type: object
+      required: [jenis, tanggal_surat, pihak, perihal, periode_id]
+      properties:
+        jenis:         { type: string, enum: [masuk, keluar] }
+        tanggal_surat: { type: string, format: date }
+        pihak:         { type: string }
+        perihal:       { type: string }
+        disposisi:     { type: string }
+        periode_id:    { type: integer }
+        surat_template_id: { type: integer, nullable: true, description: Wajib untuk surat keluar (penomoran auto) }
+
+    SuratTemplate:
+      type: object
+      properties:
+        id:         { type: integer }
+        periode_id: { type: integer }
+        nama_jenis: { type: string }
+        format:     { type: string }
+        counter:    { type: integer }
+
+    KasTransaksi:
+      type: object
+      properties:
+        id:              { type: integer }
+        tanggal:         { type: string, format: date }
+        tipe:            { type: string, enum: [pemasukan, pengeluaran] }
+        nominal:         { type: number, example: 150000 }
+        keterangan:      { type: string }
+        bukti_path:      { type: string, nullable: true }
+        kategori:        { type: string }
+        periode_id:      { type: integer }
+        member_id:       { type: integer, nullable: true }
+
+    KasWritable:
+      type: object
+      required: [tanggal, tipe, nominal, keterangan, periode_id]
+      properties:
+        tanggal:    { type: string, format: date }
+        tipe:       { type: string, enum: [pemasukan, pengeluaran] }
+        nominal:    { type: number, minimum: 0 }
+        keterangan: { type: string }
+        kategori:   { type: string }
+        periode_id: { type: integer }
+        member_id:  { type: integer, nullable: true }
+
+    Iuran:
+      type: object
+      properties:
+        id:           { type: integer }
+        nama:         { type: string }
+        jumlah:       { type: number }
+        periode_id:   { type: integer }
+        komunitas_id: { type: integer, nullable: true }
+        tenggat:      { type: string, format: date }
+        ringkasan:
+          type: object
+          properties:
+            total_tagihan: { type: integer }
+            lunas:         { type: integer }
+            belum:         { type: integer }
+
+    IuranTagihan:
+      type: object
+      properties:
+        id:         { type: integer }
+        iuran_id:   { type: integer }
+        member:     { $ref: "#/components/schemas/Member" }
+        status:     { type: string, enum: [belum, lunas] }
+        kas_id:     { type: integer, nullable: true }
+        lunas_pada: { type: string, format: date-time, nullable: true }
+
+    ArtikelWritable:
+      type: object
+      required: [judul, konten]
+      properties:
+        judul:    { type: string }
+        konten:   { type: string }
+        kategori: { type: string }
+        tags:     { type: array, items: { type: string } }
+        status:   { type: string, enum: [draft, published], default: draft }
+
+    EventWritable:
+      type: object
+      required: [judul, mulai, selesai]
+      properties:
+        judul:        { type: string }
+        deskripsi:    { type: string }
+        lokasi:       { type: string }
+        mulai:        { type: string, format: date-time }
+        selesai:      { type: string, format: date-time }
+        komunitas_id: { type: integer, nullable: true }
+        status:       { type: string, enum: [draft, published, batal], default: draft }
+
+    AlbumWritable:
+      type: object
+      required: [judul]
+      properties:
+        judul:     { type: string }
+        deskripsi: { type: string }
+        event_id:  { type: integer, nullable: true }
+
+    PengumumanWritable:
+      type: object
+      required: [judul, isi]
+      properties:
+        judul:          { type: string }
+        isi:            { type: string }
+        prioritas:      { type: string, enum: [normal, penting], default: normal }
+        tayang_mulai:   { type: string, format: date }
+        tayang_selesai: { type: string, format: date, nullable: true }
+        komunitas_id:   { type: integer, nullable: true }
+
+    Proyek:
+      type: object
+      properties:
+        id:             { type: integer }
+        judul:          { type: string }
+        slug:           { type: string }
+        deskripsi:      { type: string }
+        thumbnail_path: { type: string, nullable: true }
+        link_demo:      { type: string, nullable: true }
+        link_repo:      { type: string, nullable: true }
+        teknologi:      { type: array, items: { type: string } }
+        pembuat:        { $ref: "#/components/schemas/Member" }
+        divisi_id:      { type: integer, nullable: true }
+        komunitas_id:   { type: integer }
+        status:         { type: string, enum: [draft, published] }
+        published_at:   { type: string, format: date-time, nullable: true }
+        created_at:     { type: string, format: date-time }
+
+    ProyekWritable:
+      type: object
+      required: [judul, pembuat_id]
+      properties:
+        judul:        { type: string }
+        deskripsi:    { type: string }
+        link_demo:    { type: string, format: uri }
+        link_repo:    { type: string, format: uri }
+        teknologi:    { type: array, items: { type: string } }
+        pembuat_id:   { type: integer, description: member.id pembuat karya }
+        divisi_id:    { type: integer, nullable: true }
+        komunitas_id: { type: integer, description: Wajib bagi admin pusat; pengurus komunitas otomatis di-scope ke komunitasnya }
+        status:       { type: string, enum: [draft, published], default: draft }
+
+    Kelas:
+      type: object
+      properties:
+        id:           { type: integer }
+        nama:         { type: string }
+        deskripsi:    { type: string }
+        divisi_id:    { type: integer, nullable: true }
+        komunitas_id: { type: integer }
+        jadwal_hari:  { type: string, example: Sabtu }
+        jadwal_jam:   { type: string, example: "16.00" }
+        tempat:       { type: string, nullable: true }
+        pengajar:
+          type: array
+          description: Anggota bertugas mengajar (via penugasan pada divisi terkait)
+          items: { $ref: "#/components/schemas/Member" }
+        materis:
+          type: array
+          description: Hanya diisi pada detail untuk member komunitas yang disetujui
+          items: { $ref: "#/components/schemas/Materi" }
+
+    KelasWritable:
+      type: object
+      required: [nama, komunitas_id]
+      properties:
+        nama:         { type: string }
+        deskripsi:    { type: string }
+        divisi_id:    { type: integer, nullable: true }
+        komunitas_id: { type: integer, description: Wajib bagi admin pusat; pengurus komunitas otomatis di-scope }
+        jadwal_hari:  { type: string }
+        jadwal_jam:   { type: string }
+        tempat:       { type: string }
+
+    Materi:
+      type: object
+      properties:
+        id:         { type: integer }
+        kelas_id:   { type: integer }
+        judul:      { type: string }
+        tipe:       { type: string, enum: [file, link] }
+        file_path:  { type: string, nullable: true }
+        link_url:   { type: string, nullable: true }
+        urutan:     { type: integer }
+        created_at: { type: string, format: date-time }
+
+    MateriWritable:
+      type: object
+      required: [judul, tipe]
+      properties:
+        judul:    { type: string }
+        tipe:     { type: string, enum: [file, link] }
+        link_url: { type: string, format: uri, description: Wajib bila tipe=link }
+        urutan:   { type: integer }
+        file:     { type: string, format: binary, description: Hanya pada multipart POST — max 10MB (ADR D5) }
