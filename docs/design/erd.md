@@ -173,6 +173,7 @@ erDiagram
     MEMBERS ||--o{ RAPAT_MEMBER : "presensi"
     PERIODES ||--o{ SURATS : "mengarsipkan"
     SURAT_TEMPLATES ||--o{ SURATS : "menomori"
+    SURATS ||--o{ SURAT_STATUS_LOGS : "alur status tercatat"
     PERIODES ||--o{ KAS : "membukukan"
     KAS_KATEGORIS ||--o{ KAS : "mengklasifikasi"
     IURANS ||--o{ IURAN_MEMBER : "ditagihkan"
@@ -227,6 +228,15 @@ erDiagram
         string nama_jenis "proposal-undangan-sp-sertifikat"
         string format "{urut}/HIMSI/UMKU/{romawi}/{tahun}" placeholder
         int counter
+        timestamps _std
+    }
+
+    SURAT_STATUS_LOGS {
+        bigint id PK
+        bigint surat_id FK "cascade"
+        enum status "draft-review-disetujui-terkirim"
+        string catatan "nullable"
+        bigint user_id FK "siapa yang mengubah - US-19"
         timestamps _std
     }
 

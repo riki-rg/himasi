@@ -44,6 +44,8 @@ class AppServiceProvider extends ServiceProvider
                 ->exists() ?? false;
         });
         Gate::define('kelola-struktur', fn (User $user) => app(RoleResolver::class)->isAdminPusat($user));
+        Gate::define('kelola-surat', fn (User $user) => app(RoleResolver::class)->isAdminPusat($user)
+            || app(RoleResolver::class)->isSekretaris($user));
         Gate::define('kelola-konten', function (User $user) {
             if (app(RoleResolver::class)->isAdminPusat($user)) {
                 return true;

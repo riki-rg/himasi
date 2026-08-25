@@ -10,6 +10,7 @@ use App\Http\Controllers\PengumumanController;
 use App\Http\Controllers\PublikController;
 use App\Http\Controllers\RapatController;
 use App\Http\Controllers\StrukturController;
+use App\Http\Controllers\SuratController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth')->group(function (): void {
@@ -93,4 +94,17 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/rapat/{rapat}/qr', [RapatController::class, 'qr']);
     Route::post('/rapat/{rapat}/absen', [RapatController::class, 'absen']);
     Route::get('/rapat/{rapat}/rekap', [RapatController::class, 'rekap']);
+
+    Route::middleware('can:kelola-surat')->group(function (): void {
+        Route::get('/surat/templates', [SuratController::class, 'templates']);
+        Route::post('/surat/templates', [SuratController::class, 'storeTemplate']);
+        Route::put('/surat/templates/{template}', [SuratController::class, 'updateTemplate']);
+        Route::get('/surat', [SuratController::class, 'index']);
+        Route::post('/surat', [SuratController::class, 'store']);
+        Route::get('/surat/{surat}', [SuratController::class, 'show']);
+        Route::put('/surat/{surat}', [SuratController::class, 'update']);
+        Route::delete('/surat/{surat}', [SuratController::class, 'destroy']);
+        Route::post('/surat/{surat}/status', [SuratController::class, 'ubahStatus']);
+        Route::get('/surat/{surat}/logs', [SuratController::class, 'logs']);
+    });
 });

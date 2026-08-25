@@ -88,7 +88,12 @@ Urutan konkret:
 - ~~Absensi QR rotasi 60 detik (ADR D1)~~ ✅ token `{id}|{window}|{hmac}` HMAC-SHA256, zero write DB per rotasi; mapping error 410 QrExpired · 409 SudahAbsen · 422 invalid; jendela aktif = hari-H mulai H-15m s.d. selesai+120m (`App\Services\QrPresensi`)
 - ~~Rekap kehadiran~~ ✅ hitungan hadir/tidak/izin + persentase + rincian
 
-### FASE 5 — Surat (US-17–19) · penomoran otomatis dari template DB (ADR D4)
+### FASE 5 — Surat (US-17–19) ✅ selesai
+
+- ~~Template penomoran otomatis (ADR D4)~~ ✅ render `{urut}/{romawi}/{tahun}` · counter atomik `lockForUpdate` · edit format tidak mengubah nomor lama
+- ~~Arsip masuk & keluar~~ ✅ scan PDF ≤10MB · pencarian q nomor/perihal/pihak · keluar tanpa template 422
+- ~~Alur status surat keluar~~ ✅ adjacent-only maju draft→review→disetujui→terkirim; mundur/lompat 409; audit trail tabel `surat_status_logs` (+ endpoint `GET /surat/{id}/logs`)
+- 📌 Catatan amendment: ERD +openapi butuh sinkronisasi kecil — tabel `surat_status_logs` & `PUT /surat/templates/{id}` (kebutuhan eksplisit AC US-17/19) — menunggu update yaml oleh owner
 
 ### FASE 6 — Keuangan (US-20–22) + Showcase Karya & Kelas (US-23–24)
 
