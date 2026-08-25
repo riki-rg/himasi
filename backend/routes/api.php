@@ -5,8 +5,12 @@ use App\Http\Controllers\ArtikelController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\GaleriController;
+use App\Http\Controllers\IuranController;
+use App\Http\Controllers\KasController;
 use App\Http\Controllers\KeanggotaanController;
+use App\Http\Controllers\KelasController;
 use App\Http\Controllers\PengumumanController;
+use App\Http\Controllers\ProyekController;
 use App\Http\Controllers\PublikController;
 use App\Http\Controllers\RapatController;
 use App\Http\Controllers\StrukturController;
@@ -34,6 +38,9 @@ Route::prefix('publik')->group(function (): void {
     Route::get('/galeri/albums', [PublikController::class, 'albums']);
     Route::get('/galeri/albums/{album}', [PublikController::class, 'albumDetail']);
     Route::get('/pengumumans', [PublikController::class, 'pengumumans']);
+    Route::get('/proyeks', [PublikController::class, 'proyeks']);
+    Route::get('/proyeks/{slug}', [PublikController::class, 'proyekDetail']);
+    Route::get('/kelass', [PublikController::class, 'kelass']);
 });
 
 Route::middleware('auth:sanctum')->group(function (): void {
@@ -106,5 +113,40 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::delete('/surat/{surat}', [SuratController::class, 'destroy']);
         Route::post('/surat/{surat}/status', [SuratController::class, 'ubahStatus']);
         Route::get('/surat/{surat}/logs', [SuratController::class, 'logs']);
+    });
+
+    Route::middleware('can:lihat-rekap-keuangan')->group(function (): void {
+        Route::get('/kas/rekap', [KasController::class, 'rekap']);
+    });
+
+    Route::middleware('can:kelola-keuangan')->group(function (): void {
+        Route::get('/kas', [KasController::class, 'index']);
+        Route::post('/kas', [KasController::class, 'store']);
+        Route::get('/kas/export', [KasController::class, 'export']);
+        Route::get('/kas/{kas}', [KasController::class, 'show']);
+        Route::put('/kas/{kas}', [KasController::class, 'update']);
+        Route::delete('/kas/{kas}', [KasController::class, 'destroy']);
+
+        Route::get('/iuran', [IuranController::class, 'index']);
+        Route::post('/iuran', [IuranController::class, 'store']);
+        Route::get('/iuran/{iuran}/tagihan', [IuranController::class, 'tagihans']);
+        Route::post('/iuran/tagihan/{tagihan}/lunasi', [IuranController::class, 'lunasi']);
+    });
+
+    Route::middleware('auth:sanctum')->group(function (): void {
+        Route::get('/proyeks', [ProyekController::class, 'index']);
+        Route::post('/proyeks', [ProyekController::class, 'store']);
+        Route::get('/proyeks/{proyek}', [ProyekController::class, 'show']);
+        Route::put('/proyeks/{proyek}', [ProyekController::class, 'update']);
+        Route::delete('/proyeks/{proyek}', [ProyekController::class, 'destroy']);
+
+        Route::get('/kelass', [KelasController::class, 'index']);
+        Route::post('/kelass', [KelasController::class, 'store']);
+        Route::get('/kelass/{kelas}', [KelasController::class, 'show']);
+        Route::put('/kelass/{kelas}', [KelasController::class, 'update']);
+        Route::delete('/kelass/{kelas}', [KelasController::class, 'destroy']);
+        Route::post('/kelass/{kelas}/materis', [KelasController::class, 'storeMateri']);
+        Route::put('/materis/{materi}', [KelasController::class, 'updateMateri']);
+        Route::delete('/materis/{materi}', [KelasController::class, 'destroyMateri']);
     });
 });

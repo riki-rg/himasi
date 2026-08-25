@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Divisi;
 use App\Models\Jabatan;
+use App\Models\KasKategori;
 use App\Models\Komunitas;
 use App\Models\Periode;
 use Illuminate\Database\Seeder;
@@ -24,6 +25,17 @@ class DatabaseSeeder extends Seeder
 
         foreach ($komunitas as $data) {
             Komunitas::query()->create($data);
+        }
+
+        foreach ([
+            ['nama' => 'Iuran', 'tipe_default' => 'pemasukan'],
+            ['nama' => 'Sponsor', 'tipe_default' => 'pemasukan'],
+            ['nama' => 'Donasi', 'tipe_default' => 'pemasukan'],
+            ['nama' => 'Konsumsi', 'tipe_default' => 'pengeluaran'],
+            ['nama' => 'Transportasi', 'tipe_default' => 'pengeluaran'],
+            ['nama' => 'Perlengkapan', 'tipe_default' => 'pengeluaran'],
+        ] as $kategori) {
+            KasKategori::query()->create($kategori);
         }
 
         $tahun = now()->year;

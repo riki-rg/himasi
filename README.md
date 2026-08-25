@@ -95,7 +95,15 @@ Urutan konkret:
 - ~~Alur status surat keluar~~ ✅ adjacent-only maju draft→review→disetujui→terkirim; mundur/lompat 409; audit trail tabel `surat_status_logs` (+ endpoint `GET /surat/{id}/logs`)
 - 📌 Catatan amendment: ERD +openapi butuh sinkronisasi kecil — tabel `surat_status_logs` & `PUT /surat/templates/{id}` (kebutuhan eksplisit AC US-17/19) — menunggu update yaml oleh owner
 
-### FASE 6 — Keuangan (US-20–22) + Showcase Karya & Kelas (US-23–24)
+### FASE 6 — Keuangan (US-20–22) + Showcase Karya & Kelas (US-23–24) ✅ selesai — BACKEND TUNTAS
+
+- ~~Transaksi kas + bukti~~ ✅ nominal DECIMAL(12,2) → string di JSON; bukti foto ≤5MB; kategori auto-resolve `firstOrCreate`
+- ~~Rekap~~ ✅ saldo = Σmasuk−Σkeluar; breakdown per bulan/kategori; akses bendahara full · pengurus lain agregat saja (ADR D2)
+- ~~Laporan export~~ ✅ xlsx/csv berisi transaksi+total+saldo (flag amendment: endpoint `/kas/export` belum ada di openapi)
+- ~~Iuran & tagihan otomatis~~ ✅ POST /iuran generate tagihan anggota aktif komunitas/HIMSI semua; lunasi atomik → transaksi kas pemasukan otomatis + kas_id terisi
+- ~~Showcase karya~~ ✅ pengurus scoped komunitasnya (lintas → 403); admin bebas; publik published-only + nama pembuat
+- ~~Kelas & materi~~ ✅ materi gated member disetujui (non-member 403); publik list tanpa materi; upload file ≤10MB / link; pengajar via penugasan divisi
+- 📌 Seed baru: 6 kategori kas standar (Iuran/Sponsor/Donasi/Konsumsi/Transportasi/Perlengkapan)
 
 ### FASE 7+ — Frontend (setelah endpoint fase terkait stabil)
 

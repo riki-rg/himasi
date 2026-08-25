@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Kas;
 use App\Models\Member;
 use App\Support\Problem;
 use Illuminate\Database\Eloquent\Builder;
@@ -87,6 +88,41 @@ class MemberImportExporter
                     ]));
                 }
             });
+
+            $writer->close();
+        }, $filename, [
+            'Content-Type' => $format === 'csv'
+                ? 'text/csv; charset=UTF-8'
+                : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
+
+    /**
+     * Laporan keuangan: daftar transaksi + total + saldo (US-21).
+     *
+     * @param  iterable<Kas>  $transaksis
+     * @param  array{total_pemasukan: float|int|string, total_pengeluaran: float|int|string, saldo: float|int|string}  $totals
+     */
+    public function exportLaporanKeuangan(iterable $transaksis, array $totals, string $format): StreamedResponse
+    {
+        $filename = 'laporan-keuangan-himsi-'.now()->format('Ymd-His').".$format";
+
+        return response()->streamDownload(function () use ($transaksis, $totals, $format) {
+            $writer = $format === 'csv' ? new CsvWriter : new XlsxWriter;
+            $writer->openToFile('php://output');
+
+            $writer->addRow(Row::fromValues(['Tanggal', 'Tipe', 'Kategori', 'Keterangan', 'Nominal']));
+            foreach ($transaksis as $t) {
+                $writer->addRow(Row::fromValues([
+                    $t->tanggal?->toDateString(), $t->tipe, $t->kategori?->nama ?? '',
+                    $t->keterangan, (string) $t->nominal,
+                ]));
+            }
+
+            $writer->addRow(Row::fromValues(['']));
+            $writer->addRow(Row::fromValues(['Total Pemasukan', (string) $totals['total_pemasukan']]));
+            $writer->addRow(Row::fromValues(['Total Pengeluaran', (string) $totals['total_pengeluaran']]));
+            $writer->addRow(Row::fromValues(['Saldo', (string) $totals['saldo']]));
 
             $writer->close();
         }, $filename, [

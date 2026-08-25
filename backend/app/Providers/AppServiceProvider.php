@@ -46,6 +46,17 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('kelola-struktur', fn (User $user) => app(RoleResolver::class)->isAdminPusat($user));
         Gate::define('kelola-surat', fn (User $user) => app(RoleResolver::class)->isAdminPusat($user)
             || app(RoleResolver::class)->isSekretaris($user));
+        Gate::define('kelola-keuangan', fn (User $user) => app(RoleResolver::class)->isAdminPusat($user)
+            || app(RoleResolver::class)->isBendahara($user));
+        Gate::define('lihat-rekap-keuangan', function (User $user) {
+            if (app(RoleResolver::class)->isAdminPusat($user)) {
+                return true;
+            }
+
+            return $user->member?->penugasans()
+                ->whereHas('periode', fn ($q) => $q->where('status', 'aktif'))
+                ->exists() ?? false;
+        });
         Gate::define('kelola-konten', function (User $user) {
             if (app(RoleResolver::class)->isAdminPusat($user)) {
                 return true;

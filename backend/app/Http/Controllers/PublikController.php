@@ -7,9 +7,12 @@ use App\Http\Resources\EventResource;
 use App\Http\Resources\GaleriAlbumResource;
 use App\Http\Resources\PengumumanResource;
 use App\Models\Artikel;
+use App\Models\Divisi;
 use App\Models\Event;
 use App\Models\GaleriAlbum;
+use App\Models\Kelas;
 use App\Models\Pengumuman;
+use App\Models\Proyek;
 use App\Support\Problem;
 use Illuminate\Http\Request;
 
@@ -96,6 +99,128 @@ class PublikController extends Controller
             ->orderByDesc('created_at')
             ->get()
         )->resolve());
+    }
+
+    /** GET /publik/proyeks — karya published per komunitas + nama pembuat (US-23). */
+    public function proyeks(Request $request)
+    {
+        $paginator = Proyek::query()
+            ->where('status', 'published')
+            ->when($request->filled('komunitas'), fn ($q) => $q->whereHas(
+                'komunitas',
+                fn ($k) => $k->where('kode', $request->string('komunitas')->upper())
+            ))
+            ->when($request->filled('q'), fn ($q) => $q->where(function ($w) use ($request) {
+                $term = '%'.$request->string('q').'%';
+                $w->where('judul', 'like', $term)->orWhere('deskripsi', 'like', $term);
+            }))
+            ->with(['pembuat:id,nim,nama,foto_path', 'komunitas:id,kode,nama'])
+            ->orderByDesc('published_at')
+            ->paginate(min(max($request->integer('per_page', 15), 1), 100));
+
+        return response()->json([
+            'data' => collect($paginator->items())->map(fn ($p) => [
+                'id' => $p->id,
+                'judul' => $p->judul,
+                'slug' => $p->slug,
+                'deskripsi' => $p->deskripsi,
+                'thumbnail_path' => $p->thumbnail_path,
+                'link_demo' => $p->link_demo,
+                'link_repo' => $p->link_repo,
+                'teknologi' => $p->teknologi ?? [],
+                'pembuat' => $p->pembuat ? [
+                    'nim' => $p->pembuat->nim,
+                    'nama' => $p->pembuat->nama,
+                    'foto_path' => $p->pembuat->foto_path,
+                ] : null,
+                'komunitas' => $p->komunitas?->kode,
+                'published_at' => $p->published_at?->toISOString(),
+            ])->values(),
+            'meta' => [
+                'current_page' => $paginator->currentPage(),
+                'last_page' => $paginator->lastPage(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+            ],
+            'links' => [
+                'first' => $paginator->url(1),
+                'last' => $paginator->url($paginator->lastPage()),
+                'prev' => $paginator->previousPageUrl(),
+                'next' => $paginator->nextPageUrl(),
+            ],
+        ]);
+    }
+
+    /** GET /publik/proyeks/{slug} */
+    public function proyekDetail(string $slug)
+    {
+        $proyek = Proyek::query()
+            ->where('slug', $slug)
+            ->where('status', 'published')
+            ->with(['pembuat:id,nim,nama,foto_path,link_portofolio,link_instagram'])
+            ->first();
+
+        if ($proyek === null) {
+            throw Problem::notFound('Karya tidak ditemukan.');
+        }
+
+        return response()->json([
+            'id' => $proyek->id,
+            'judul' => $proyek->judul,
+            'slug' => $proyek->slug,
+            'deskripsi' => $proyek->deskripsi,
+            'thumbnail_path' => $proyek->thumbnail_path,
+            'link_demo' => $proyek->link_demo,
+            'link_repo' => $proyek->link_repo,
+            'teknologi' => $proyek->teknologi ?? [],
+            'pembuat' => $proyek->pembuat ? [
+                'nim' => $proyek->pembuat->nim,
+                'nama' => $proyek->pembuat->nama,
+                'foto_path' => $proyek->pembuat->foto_path,
+                'link_portofolio' => $proyek->pembuat->link_portofolio,
+                'link_instagram' => $proyek->pembuat->link_instagram,
+            ] : null,
+            'published_at' => $proyek->published_at?->toISOString(),
+        ]);
+    }
+
+    /** GET /publik/kelass — daftar kelas TANPA materi (US-24). */
+    public function kelass(Request $request)
+    {
+        return response()->json(Kelas::query()
+            ->when($request->filled('komunitas'), fn ($q) => $q->whereHas(
+                'komunitas',
+                fn ($k) => $k->where('kode', $request->string('komunitas')->upper())
+            ))
+            ->when($request->filled('q'), fn ($q) => $q->where('nama', 'like', '%'.$request->string('q').'%'))
+            ->with('divisi:id,nama')
+            ->get()
+            ->map(fn ($k) => [
+                'id' => $k->id,
+                'nama' => $k->nama,
+                'deskripsi' => $k->deskripsi,
+                'divisi' => $k->divisi?->nama,
+                'jadwal_hari' => $k->jadwal_hari,
+                'jadwal_jam' => $k->jadwal_jam,
+                'tempat' => $k->tempat,
+                'pengajar' => $this->pengajarRingkas($k),
+            ])->values());
+    }
+
+    private function pengajarRingkas(Kelas $kelas): array
+    {
+        if ($kelas->divisi_id === null) {
+            return [];
+        }
+
+        return Divisi::query()->find($kelas->divisi_id)?->jabatans()
+            ->with('penugasans.member:id,nim,nama')
+            ->get()
+            ->flatMap(fn ($j) => $j->penugasans)
+            ->filter(fn ($p) => $p->member !== null)
+            ->unique('member_id')
+            ->map(fn ($p) => ['nama' => $p->member->nama])
+            ->values()->all() ?? [];
     }
 
     private function artikelQuery(?Request $request = null)
