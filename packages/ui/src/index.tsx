@@ -175,3 +175,5 @@ export {
   type ProblemJson,
   type ApiClientOptions,
 } from './lib/api'
+
+export { ScannerOverlay } from './components/scanner-overlay'

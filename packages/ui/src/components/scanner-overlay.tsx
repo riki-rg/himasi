@@ -1,3 +1,5 @@
+'use client'
+
 import { Button, Input } from '@himsi/ui'
 import { Html5Qrcode } from 'html5-qrcode'
 import { useEffect, useRef, useState } from 'react'

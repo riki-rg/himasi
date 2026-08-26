@@ -1,10 +1,24 @@
 import { Suspense, lazy } from 'react'
-import { Link, Navigate, Outlet, createBrowserRouter, useNavigate } from 'react-router'
-import { api, hapusToken } from './lib/api'
+import { Link, Navigate, Outlet, createBrowserRouter, useLocation, useNavigate } from 'react-router'
+import { api, hapusToken, punyaToken } from './lib/api'
 
 const HomePage = lazy(() => import('./pages/home'))
 const LoginPage = lazy(() => import('./pages/login'))
 const AppPage = lazy(() => import('./pages/app'))
+const DiskusiDetailPage = lazy(() => import('./pages/diskusi-detail'))
+const BacaanKatalog = lazy(() =>
+  import('./pages/bacaan').then((m) => ({ default: m.BacaanKatalog })),
+)
+const BacaanDetail = lazy(() => import('./pages/bacaan').then((m) => ({ default: m.BacaanDetail })))
+
+function RequireAuth() {
+  const location = useLocation()
+  return punyaToken() ? (
+    <Outlet />
+  ) : (
+    <Navigate to="/login" replace state={{ dari: location.pathname }} />
+  )
+}
 
 function Fallback() {
   return <div className="grid min-h-screen place-items-center text-forest-700">Memuat…</div>
@@ -54,7 +68,16 @@ export const router = createBrowserRouter([
     children: [
       { path: '/', element: <HomePage /> },
       { path: '/login', element: <LoginPage /> },
-      { path: '/app', element: <AppPage /> },
+      {
+        path: '/app',
+        element: <RequireAuth />,
+        children: [
+          { index: true, element: <AppPage /> },
+          { path: 'diskusi/:id', element: <DiskusiDetailPage /> },
+          { path: 'bacaan', element: <BacaanKatalog /> },
+          { path: 'bacaan/:id', element: <BacaanDetail /> },
+        ],
+      },
       { path: '*', element: <Navigate to="/" replace /> },
     ],
   },

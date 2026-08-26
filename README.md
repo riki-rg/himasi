@@ -124,6 +124,12 @@ Urutan konkret:
 - ~~`galeri-album.md`~~ ✅ masonry columns + lightbox deep-linkable `?foto=N`, keyboard ←→ESC, swipe mobile, preload ±1
 - 📌 Amendment backend pendukung: `GET /keanggotaan?komunitas=&status=` (list pendaftar utk UI approve) + `/auth/me` penugasan_aktif kini menyertakan `tingkat` & `komunitas_kode` — perlu sinkron ke openapi.yaml
 
+#### Iterasi wireframe tahap akhir ✅ — 16/16 TERCAKUP
+
+- ~~`bitsi-pengurus-kelola.md`~~ ✅ kelola karya: toolbar search+filter status, form dialog lengkap (chips teknologi multi-input, pembuat dari /anggota, thumbnail ≤5MB, publish/unpublish, hapus) · kelola kelas: buat kelas + daftar materi dgn tambah file/link, **urutan panah ⬆⬇**, edit judul inline, hapus
+- ~~`sibiner-member.md`~~ ✅ `/app/diskusi/:id` mirror rapat-detail 3-fase + scan absen (ScannerOverlay kini share di `@himsi/ui`) · `/app/bacaan` katalog + rangkuman unduh; guard token + redirect kembali pasca login
+- ~~`landing-struktur.md`~~ ✅ periode selector dropdown + badge ARSIP amber + tab komunitas Semua/HIMSI/BitSI/Sibiner via searchParams + anchor per divisi + jabatan kosong "akan diisi"
+
 ## 📜 Aturan Main (WAJIB dipatuhi AI)
 
 ### Kontrak & Desain

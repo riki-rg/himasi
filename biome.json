@@ -37,7 +37,7 @@
   },
   "overrides": [
     {
-      "include": ["apps/bitsi/src/components/scanner-overlay.tsx"],
+      "include": ["apps/landing/components/lightbox-grid.tsx"],
       "linter": {
         "rules": {
           "a11y": {
@@ -47,7 +47,7 @@
       }
     },
     {
-      "include": ["apps/landing/components/lightbox-grid.tsx"],
+      "include": ["packages/ui/src/components/scanner-overlay.tsx"],
       "linter": {
         "rules": {
           "a11y": {

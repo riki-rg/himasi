@@ -10,6 +10,11 @@ const RapatDetailPage = lazy(() => import('./pages/rapat-detail'))
 const PresenterPage = lazy(() => import('./pages/presenter'))
 const ProfilPage = lazy(() => import('./pages/profil'))
 const PendaftarPage = lazy(() => import('./pages/pendaftar'))
+const KelolaKaryaPage = lazy(() => import('./pages/kelola-karya'))
+const KelolaKelasPage = lazy(() => import('./pages/kelola-kelas'))
+const KelolaMateriPage = lazy(() =>
+  import('./pages/kelola-kelas').then((m) => ({ default: m.KelolaMateriPage })),
+)
 const KelasCatalogPage = lazy(() =>
   import('./pages/kelas').then((m) => ({ default: m.KelasCatalogPage })),
 )
@@ -51,6 +56,9 @@ export const router = createBrowserRouter([
           { path: 'profil', element: <ProfilPage /> },
           { path: 'pengurus/presenter', element: <PresenterPage /> },
           { path: 'pengurus/pendaftar', element: <PendaftarPage /> },
+          { path: 'pengurus/karya', element: <KelolaKaryaPage /> },
+          { path: 'pengurus/kelas', element: <KelolaKelasPage /> },
+          { path: 'pengurus/kelas/:id', element: <KelolaMateriPage /> },
         ],
       },
       { path: '*', element: <Navigate to="/" replace /> },

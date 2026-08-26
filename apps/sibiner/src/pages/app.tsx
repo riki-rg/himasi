@@ -1,5 +1,6 @@
 import { Badge, Card, EmptyState, SkeletonBlock } from '@himsi/ui'
 import { useQuery } from '@tanstack/react-query'
+import { Link } from 'react-router'
 import { api } from '../lib/api'
 
 interface Rapat {
@@ -31,20 +32,22 @@ export default function AppPage() {
           />
         ) : (
           diskusi.data.data.map((d) => (
-            <Card key={d.id} className="border-forest-100">
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="font-semibold">{d.judul}</p>
-                {d.window_aktif ? <Badge tone="green">absensi dibuka</Badge> : null}
-              </div>
-              <p className="mt-1 font-mono text-xs text-gray-400">
-                {new Date(d.tanggal).toLocaleDateString('id-ID', {
-                  weekday: 'long',
-                  day: 'numeric',
-                  month: 'long',
-                })}{' '}
-                · {d.jam_mulai}
-              </p>
-            </Card>
+            <Link key={d.id} to={`/app/diskusi/${d.id}`}>
+              <Card className="border-forest-100 transition hover:-translate-y-0.5 hover:shadow-md">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="font-semibold">{d.judul}</p>
+                  {d.window_aktif ? <Badge tone="green">absensi dibuka</Badge> : null}
+                </div>
+                <p className="mt-1 font-mono text-xs text-gray-400">
+                  {new Date(d.tanggal).toLocaleDateString('id-ID', {
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long',
+                  })}{' '}
+                  · {d.jam_mulai}
+                </p>
+              </Card>
+            </Link>
           ))
         )}
       </section>

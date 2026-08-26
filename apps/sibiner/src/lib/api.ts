@@ -21,3 +21,7 @@ export interface MeResponse {
   name: string
   member: { nim: string; nama: string; angkatan: number } | null
 }
+
+export function punyaToken(): boolean {
+  return localStorage.getItem(TOKEN_KEY) !== null
+}

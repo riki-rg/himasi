@@ -1,8 +1,8 @@
 import { ApiError, Badge, Button, Card, EmptyState, SkeletonBlock } from '@himsi/ui'
+import { ScannerOverlay } from '@himsi/ui'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Link, useParams } from 'react-router'
-import { ScannerOverlay } from '../components/scanner-overlay'
 import { api } from '../lib/api'
 
 interface Peserta {
