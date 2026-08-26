@@ -1,7 +1,7 @@
 import { Button, Card, Field, Input } from '@himsi/ui'
 import { useQuery } from '@tanstack/react-query'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { type FormEvent, useState } from 'react'
+import { type FormEvent, useEffect, useState } from 'react'
 import { type MeResponse, api } from '../lib/api'
 
 export default function ProfilPage() {
@@ -38,6 +38,15 @@ export default function ProfilPage() {
     setSukses(false)
     simpan.mutate(new FormData(e.currentTarget))
   }
+
+  useEffect(() => {
+    if (!dirty) return
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault()
+    }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  }, [dirty])
 
   const gantiPassword = useMutation({
     mutationFn: (body: { password_lama: string; password_baru: string }) =>

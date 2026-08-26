@@ -45,7 +45,7 @@ export function ScannerOverlay({ onDecode, manualError, onClose }: ScannerOverla
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col bg-black/90 text-white"
+      className="fixed inset-0 z-50 flex flex-col overscroll-contain bg-black/90 text-white"
       role="dialog"
       aria-modal
     >

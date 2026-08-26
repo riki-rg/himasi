@@ -1,5 +1,7 @@
 @import "tailwindcss";
 @source "../../../packages/ui/src";
+@import "../../../packages/ui/src/styles/motion.css";
+@source "../../../packages/ui/src";
 
 /* Warm Library — tokens app Sibiner (krem × hijau hutan × serif) */
 @theme {
@@ -14,5 +16,5 @@
 
 body {
   background-color: var(--color-kertas);
-  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-family: "Libre Baskerville", Georgia, serif;
 }

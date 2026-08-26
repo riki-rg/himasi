@@ -111,7 +111,7 @@ export function LightboxGrid({
           role="dialog"
           aria-modal
           aria-label={current.caption ?? judul}
-          className="fixed inset-0 z-50 flex flex-col bg-black/90 text-white"
+          className="fixed inset-0 z-50 flex flex-col overscroll-contain bg-black/90 text-white"
         >
           <button
             type="button"

@@ -19,16 +19,16 @@ export default function HomePage() {
         <p className="font-mono text-xs font-bold tracking-[0.3em] text-cobalt-600">
           BIT OF SISTEM INFORMASI
         </p>
-        <h1 className="mt-4 text-3xl font-bold md:text-4xl">
+        <h1 className="rise mt-4 text-3xl font-bold text-balance md:text-4xl">
           Ngoprek bareng,
           <br />
           belajar bareng.
         </h1>
-        <p className="mx-auto mt-4 max-w-md text-gray-600">
+        <p className="rise rise-1 mx-auto mt-4 max-w-md text-gray-600">
           Komunitas tech HIMSI UMKU untuk yang suka web development, IoT, jaringan, dan server.
         </p>
 
-        <div className="mt-8 flex flex-wrap justify-center gap-2">
+        <div className="rise rise-2 mt-8 flex flex-wrap justify-center gap-2">
           {BIDANG.map((b) => (
             <Badge key={b} tone="cobalt">
               {b}
@@ -36,7 +36,7 @@ export default function HomePage() {
           ))}
         </div>
 
-        <Link to="/daftar" className="mt-10 inline-block">
+        <Link to="/daftar" className="rise rise-3 mt-10 inline-block">
           <Button className="!px-6 !py-3">GABUNG BITSI →</Button>
         </Link>
       </section>

@@ -165,7 +165,11 @@ export default function PendaftarPage() {
 
       {/* Undo toast */}
       {undoId !== null ? (
-        <div className="fixed bottom-24 left-1/2 z-50 -translate-x-1/2 rounded-full bg-gray-900 px-5 py-2.5 text-sm text-white shadow-xl md:bottom-6">
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed bottom-24 left-1/2 z-50 -translate-x-1/2 rounded-full bg-gray-900 px-5 py-2.5 text-sm text-white shadow-xl md:bottom-6"
+        >
           Disetujui.
           <button
             type="button"

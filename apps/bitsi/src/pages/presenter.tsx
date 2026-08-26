@@ -243,6 +243,11 @@ function PresentationMode({ rapat, onKeluar }: { rapat: Rapat; onKeluar: () => v
         </>
       )}
 
+      {/* Live region — hanya pengumuman penting */}
+      <p aria-live="polite" className="sr-only">
+        {payload ? 'QR absensi diperbarui' : ''}
+      </p>
+
       {/* Live counter */}
       <footer className="mx-auto mt-10 max-w-md text-center">
         <p className="font-mono text-2xl font-bold text-cobalt-700">

@@ -50,7 +50,12 @@ export function Spinner({ className }: { className?: string }) {
 
 export function Card({ className, children }: { className?: string; children: ReactNode }) {
   return (
-    <div className={cn('rounded-xl border border-gray-200 bg-white p-5 shadow-sm', className)}>
+    <div
+      className={cn(
+        'rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04]',
+        className,
+      )}
+    >
       {children}
     </div>
   )
@@ -146,7 +151,7 @@ export function SkeletonBlock({ className }: { className?: string }) {
 
 export function EmptyState({ title, description }: { title: string; description?: string }) {
   return (
-    <div className="flex flex-col items-center gap-1 rounded-xl border border-dashed border-gray-300 p-8 text-center">
+    <div className="flex flex-col items-center gap-1 rounded-xl border border-dashed border-gray-300 dark:border-white/15 p-8 text-center">
       <p className="font-medium text-gray-700">{title}</p>
       {description ? <p className="text-sm text-gray-500">{description}</p> : null}
     </div>
@@ -177,3 +182,4 @@ export {
 } from './lib/api'
 
 export { ScannerOverlay } from './components/scanner-overlay'
+export { Reveal, CountUp } from './components/reveal'

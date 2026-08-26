@@ -39,6 +39,13 @@ php artisan migrate:fresh --seed           # reset DB + seed struktur standar
 - Test: sqlite `:memory:` (sudah diset `phpunit.xml`).
 - Skema final = `docs/design/erd.md`. Amendment yang sudah disetujui owner: kolom `users.status` enum(pending, aktif) — approval akun (ADR D6).
 
+## Panel Admin (Filament)
+
+- `/admin` — akses data mahasiswa & komunitas tanpa koding UI
+- Akses dibatasi: user `aktif` dengan penugasan **Ketua/Wakil Umum, Bendahara Umum, atau Sekretaris Umum** (`User::canAccessPanel` via RoleResolver)
+- Resource: Anggota (Members) & Komunitas; tambah resource baru di `app/Filament/Resources`
+- Login pakai email+password akun tersebut (bukan token API)
+
 ## Quality gates sebelum claim "selesai"
 
 1. `vendor/bin/pint --test` bersih

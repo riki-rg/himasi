@@ -3,7 +3,9 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Services\RoleResolver;
 use Database\Factories\UserFactory;
+use Filament\Panel;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -35,5 +37,18 @@ class User extends Authenticatable
     public function member(): HasOne
     {
         return $this->hasOne(Member::class);
+    }
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        if ($this->status !== 'aktif') {
+            return false;
+        }
+
+        $resolver = app(RoleResolver::class);
+
+        return $resolver->isAdminPusat($this)
+            || $resolver->isBendahara($this)
+            || $resolver->isSekretaris($this);
     }
 }

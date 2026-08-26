@@ -1,5 +1,7 @@
 @import "tailwindcss";
 @source "../../../packages/ui/src";
+@import "../../../packages/ui/src/styles/motion.css";
+@source "../../../packages/ui/src";
 
 /* Engineering Blueprint — tokens app BitSI */
 @theme {

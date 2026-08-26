@@ -1,5 +1,8 @@
 @import "tailwindcss";
 @source "../../../packages/ui/src";
+@import "../../../packages/ui/src/styles/motion.css";
+
+@custom-variant dark (&:where(.dark, .dark *));
 
 /* Engineering Blueprint — design tokens landing page (putih × cobalt × IBM Plex) */
 @theme {
@@ -16,14 +19,37 @@
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
 }
 
+html {
+  color-scheme: light;
+}
+html.dark {
+  color-scheme: dark;
+}
+
 body {
   background-color: var(--color-paper);
   color: var(--color-ink);
   font-family: var(--font-sans);
 }
 
+/* Dark mode — ink blueprint */
+.dark body {
+  background-color: #0b1220;
+  color: #e6edf7;
+}
+
 .blueprint-grid {
   background-image: linear-gradient(to right, rgb(47 91 224 / 0.04) 1px, transparent 1px),
     linear-gradient(to bottom, rgb(47 91 224 / 0.04) 1px, transparent 1px);
   background-size: 24px 24px;
+}
+.dark .blueprint-grid {
+  background-image: linear-gradient(to right, rgb(122 157 248 / 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(122 157 248 / 0.06) 1px, transparent 1px);
+}
+
+/* Permukaan umum ikut dark */
+.dark .surface {
+  background-color: #101a2e;
+  border-color: #1e2c47;
 }

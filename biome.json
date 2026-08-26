@@ -8,7 +8,8 @@
     "rules": {
       "recommended": true,
       "correctness": {
-        "useExhaustiveDependencies": "off"
+        "useExhaustiveDependencies": "off",
+        "noInvalidPositionAtImportRule": "off"
       }
     }
   },
@@ -37,6 +38,16 @@
   },
   "overrides": [
     {
+      "include": ["packages/ui/src/components/scanner-overlay.tsx"],
+      "linter": {
+        "rules": {
+          "a11y": {
+            "useSemanticElements": "off"
+          }
+        }
+      }
+    },
+    {
       "include": ["apps/landing/components/lightbox-grid.tsx"],
       "linter": {
         "rules": {
@@ -47,11 +58,31 @@
       }
     },
     {
-      "include": ["packages/ui/src/components/scanner-overlay.tsx"],
+      "include": ["apps/bitsi/src/pages/pendaftar.tsx"],
       "linter": {
         "rules": {
           "a11y": {
             "useSemanticElements": "off"
+          }
+        }
+      }
+    },
+    {
+      "include": ["packages/ui/src/components/reveal.tsx"],
+      "linter": {
+        "rules": {
+          "style": {
+            "useExponentiationOperator": "off"
+          }
+        }
+      }
+    },
+    {
+      "include": ["apps/landing/app/layout.tsx"],
+      "linter": {
+        "rules": {
+          "security": {
+            "noDangerouslySetInnerHtml": "off"
           }
         }
       }

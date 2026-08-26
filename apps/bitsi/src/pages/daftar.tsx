@@ -1,6 +1,6 @@
 import { ApiError, Button, Field, Input } from '@himsi/ui'
 import { useMutation } from '@tanstack/react-query'
-import { type FormEvent, useState } from 'react'
+import { type FormEvent, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { api } from '../lib/api'
 
@@ -16,6 +16,14 @@ export default function DaftarPage() {
   const [sukses, setSukses] = useState(false)
   const [errors, setErrors] = useState<Record<string, string[]>>({})
   const [networkGagal, setNetworkGagal] = useState(false)
+
+  useEffect(() => {
+    if (Object.keys(errors).length > 0) {
+      document
+        .querySelector('[aria-invalid="true"]')
+        ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  }, [errors])
 
   const mutation = useMutation({
     mutationFn: (form: FormData) =>
@@ -96,14 +104,29 @@ export default function DaftarPage() {
 
             <form className="mt-6 space-y-4" onSubmit={onSubmit} noValidate>
               <Field label="NIM" required error={errors.nim}>
-                <Input name="nim" required inputMode="numeric" placeholder="2101050001" />
+                <Input
+                  name="nim"
+                  required
+                  inputMode="numeric"
+                  placeholder="2101050001…"
+                  spellCheck={false}
+                  autoComplete="off"
+                  aria-invalid={!!errors.nim}
+                />
               </Field>
               <Field label="Nama Lengkap" required error={errors.nama}>
-                <Input name="nama" required />
+                <Input name="nama" required autoComplete="name" aria-invalid={!!errors.nama} />
               </Field>
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Email UMKU" required error={errors.email}>
-                  <Input name="email" type="email" required />
+                  <Input
+                    name="email"
+                    type="email"
+                    required
+                    autoComplete="email"
+                    spellCheck={false}
+                    aria-invalid={!!errors.email}
+                  />
                 </Field>
                 <Field label="Angkatan" required error={errors.angkatan}>
                   <Input
@@ -118,16 +141,29 @@ export default function DaftarPage() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Password" required error={errors.password} hint="min. 8 karakter">
-                  <Input name="password" type="password" minLength={8} required />
+                  <Input
+                    name="password"
+                    type="password"
+                    minLength={8}
+                    required
+                    autoComplete="new-password"
+                    aria-invalid={!!errors.password}
+                  />
                 </Field>
                 <Field label="No. HP" error={errors.no_hp}>
-                  <Input name="no_hp" inputMode="tel" placeholder="08…" />
+                  <Input
+                    name="no_hp"
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    placeholder="08…"
+                  />
                 </Field>
               </div>
               <Field label="Prodi" error={errors.prodi}>
                 <select
                   name="prodi"
-                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-cobalt-500"
+                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm ring-cobalt-100 transition focus:border-cobalt-500 focus:ring-2 focus:outline-none"
                 >
                   <option>Sistem Informasi</option>
                 </select>

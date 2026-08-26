@@ -47,7 +47,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8">
       <header>
-        <h1 className="text-xl font-bold">Selamat datang, {nama} 👋</h1>
+        <h1 className="rise text-xl font-bold">Selamat datang, {nama} 👋</h1>
         <p className="mt-1 text-sm text-gray-500">
           anggota BITSI · angkatan {me.data?.member?.angkatan ?? '-'}
         </p>
@@ -64,7 +64,7 @@ export default function DashboardPage() {
             const r = rapat.data.data[0]
             if (!r) return null
             return (
-              <Card className="border-l-4 border-l-cobalt-600">
+              <Card className="breathe border-l-4 border-l-cobalt-600">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="size-2 animate-pulse rounded-full bg-cobalt-500" aria-hidden />
                   <p className="font-mono text-xs font-bold tracking-widest text-cobalt-700">
