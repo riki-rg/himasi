@@ -78,5 +78,10 @@ class AdminPanelProvider extends PanelProvider
             PanelsRenderHook::BODY_END,
             fn (): View => view('filament.number-flow'),
         );
+
+        FilamentView::registerRenderHook(
+            PanelsRenderHook::STYLES_BEFORE,
+            fn (): View => view('filament.himsi-theme'),
+        );
     }
 }
