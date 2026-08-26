@@ -114,6 +114,16 @@ Urutan konkret:
 - 📌 Komponen struktural di `@himsi/ui`; yang membedakan antar-app hanya design tokens (@theme) — prinsip wireframes README #5
 - 📌 Quality gates frontend: `pnpm lint` + `typecheck` + `test` (7/7) + `build` hijau semua
 
+#### Iterasi wireframe lanjutan ✅
+
+- ~~`bitsi-rapat-detail.md`~~ ✅ list rapat mendatang/lampau + detail 3-fase (terjadwal → berlangsung → selesai/notulen); **scan absensi** html5-qrcode frame sudut cobalt + fallback kode manual; mapping error: 410 "QR sudah ganti" · 409 ramah tutup scanner · 422 inline; vibrate sukses; peserta collapse dgn status kehadiran
+- ~~`bitsi-presenter-qr.md`~~ ✅ layar pilih rapat → fullscreen QR hitam-putih murni (`react-qr-code`); rotasi refresh t=52s via ticker 1s; progress bar sisa detik; live counter poll rekap 10s + nama baru (inisial privasi); pause ⏸ sembunyikan QR; Wake Lock; konfirmasi keluar inline + ringkasan; kode manual full payload ditampilkan mono kecil
+- ~~`bitsi-profil.md`~~ ✅ NIM readonly; save-bar sticky saat dirty; foto ≤5MB; ganti password inline
+- ~~`bitsi-pengurus-pendaftar.md`~~ ✅ tabs pending/disetujui/ditolak; approve + **undo toast 5 detik**; race 409 → auto-refresh
+- ~~`bitsi-kelas.md`~~ ✅ katalog kartu per divisi + detail materi unduh/buka (urutan sesi terjaga)
+- ~~`galeri-album.md`~~ ✅ masonry columns + lightbox deep-linkable `?foto=N`, keyboard ←→ESC, swipe mobile, preload ±1
+- 📌 Amendment backend pendukung: `GET /keanggotaan?komunitas=&status=` (list pendaftar utk UI approve) + `/auth/me` penugasan_aktif kini menyertakan `tingkat` & `komunitas_kode` — perlu sinkron ke openapi.yaml
+
 ## 📜 Aturan Main (WAJIB dipatuhi AI)
 
 ### Kontrak & Desain

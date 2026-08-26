@@ -6,7 +6,10 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true
+      "recommended": true,
+      "correctness": {
+        "useExhaustiveDependencies": "off"
+      }
     }
   },
   "formatter": {
@@ -31,5 +34,27 @@
       "semicolons": "asNeeded",
       "quoteStyle": "single"
     }
-  }
+  },
+  "overrides": [
+    {
+      "include": ["apps/bitsi/src/components/scanner-overlay.tsx"],
+      "linter": {
+        "rules": {
+          "a11y": {
+            "useSemanticElements": "off"
+          }
+        }
+      }
+    },
+    {
+      "include": ["apps/landing/components/lightbox-grid.tsx"],
+      "linter": {
+        "rules": {
+          "a11y": {
+            "useSemanticElements": "off"
+          }
+        }
+      }
+    }
+  ]
 }

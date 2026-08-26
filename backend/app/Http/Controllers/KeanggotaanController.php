@@ -16,6 +16,32 @@ use Symfony\Component\HttpFoundation\Response;
 class KeanggotaanController extends Controller
 {
     /**
+     * GET /keanggotaan?komunitas=BITSI&status=pending — antrean pendaftar
+     * untuk layar approve pengurus (wireframe bitsi-pengurus-pendaftar.md).
+     */
+    public function index(Request $request): JsonResponse
+    {
+        $kode = strtoupper($request->string('komunitas')->toString());
+        Gate::authorize('pengurus-komunitas', $kode);
+
+        $rows = KomunitasMember::query()
+            ->whereHas('komunitas', fn ($k) => $k->where('kode', $kode))
+            ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
+            ->with(['member:id,nim,nama,prodi,angkatan,email,no_hp,foto_path,link_portofolio,link_instagram'])
+            ->orderByDesc('created_at')
+            ->get();
+
+        return response()->json($rows->map(fn ($km) => [
+            'id' => $km->id,
+            'member' => $km->member,
+            'komunitas' => ['id' => $km->komunitas->id, 'kode' => $km->komunitas->kode, 'nama' => $km->komunitas->nama],
+            'status' => $km->status,
+            'disetujui_pada' => $km->disetujui_pada?->toISOString(),
+            'daftar_pada' => $km->created_at?->toISOString(),
+        ])->values());
+    }
+
+    /**
      * POST /keanggotaan — apply mandiri (pending) atau input manual
      * oleh admin/ketua komunitas (langsung disetujui). ADR D6.
      */

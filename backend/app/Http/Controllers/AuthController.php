@@ -124,7 +124,9 @@ class AuthController extends Controller
             ->get()
             ->map(fn ($p) => [
                 'jabatan' => $p->jabatan->nama,
+                'tingkat' => $p->jabatan->tingkat,
                 'divisi' => $p->jabatan->divisi->nama,
+                'komunitas_kode' => $p->jabatan->divisi?->komunitas?->kode,
                 'periode' => $p->periode->nama,
             ])
             ->all() ?? [];

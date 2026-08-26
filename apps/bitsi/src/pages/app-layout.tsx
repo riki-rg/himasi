@@ -11,6 +11,12 @@ const MENU = [
   { to: '/app/profil', label: 'Profil', icon: '○' },
 ]
 
+function pakaiMenuPengurus(me?: MeResponse): boolean {
+  return (me?.penugasan_aktif ?? []).some(
+    (p) => p.tingkat === 'utama' && (p.komunitas_kode === null || p.komunitas_kode === 'BITSI'),
+  )
+}
+
 export default function AppLayout() {
   const navigate = useNavigate()
 
@@ -36,6 +42,38 @@ export default function AppLayout() {
       {/* Sidebar desktop */}
       <aside className="hidden w-60 shrink-0 border-r border-gray-200 bg-white p-5 md:flex md:flex-col">
         <p className="font-mono font-bold tracking-widest">▣ BitSI</p>
+        {pakaiMenuPengurus(me.data) ? (
+          <div className="mt-6">
+            <p className="font-mono text-[10px] font-bold tracking-widest text-gray-400">
+              PENGURUS
+            </p>
+            <nav className="mt-2 flex flex-col gap-1">
+              <NavLink
+                to="/app/pengurus/presenter"
+                className={({ isActive }) =>
+                  cn(
+                    'rounded-lg px-3 py-2.5 text-sm font-medium',
+                    isActive ? 'bg-cobalt-50 text-cobalt-700' : 'text-gray-600 hover:bg-gray-50',
+                  )
+                }
+              >
+                🛠 Presenter QR
+              </NavLink>
+              <NavLink
+                to="/app/pengurus/pendaftar"
+                className={({ isActive }) =>
+                  cn(
+                    'rounded-lg px-3 py-2.5 text-sm font-medium',
+                    isActive ? 'bg-cobalt-50 text-cobalt-700' : 'text-gray-600 hover:bg-gray-50',
+                  )
+                }
+              >
+                🛠 Approve Pendaftar
+              </NavLink>
+            </nav>
+          </div>
+        ) : null}
+
         <nav className="mt-8 flex flex-col gap-1">
           {MENU.map((m) => (
             <NavLink

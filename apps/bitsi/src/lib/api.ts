@@ -34,5 +34,11 @@ export interface MeResponse {
     foto_path?: string | null
   } | null
   komunitas: { kode: string; nama: string }[]
-  penugasan_aktif: { jabatan: string; divisi: string; periode: string }[]
+  penugasan_aktif: {
+    jabatan: string
+    tingkat: string
+    divisi: string
+    komunitas_kode: string | null
+    periode: string
+  }[]
 }

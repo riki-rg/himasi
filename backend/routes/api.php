@@ -44,6 +44,7 @@ Route::prefix('publik')->group(function (): void {
 });
 
 Route::middleware('auth:sanctum')->group(function (): void {
+    Route::get('/keanggotaan', [KeanggotaanController::class, 'index']);
     Route::post('/keanggotaan', [KeanggotaanController::class, 'store']);
     Route::patch('/keanggotaan/{keanggotaan}', [KeanggotaanController::class, 'update']);
     Route::delete('/keanggotaan/{keanggotaan}', [KeanggotaanController::class, 'destroy']);
