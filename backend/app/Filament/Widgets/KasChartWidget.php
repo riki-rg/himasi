@@ -10,7 +10,11 @@ class KasChartWidget extends ChartWidget
 {
     protected ?string $heading = 'Keuangan per bulan (periode aktif)';
 
-    protected ?string $maxHeight = '280px';
+    protected ?string $maxHeight = '300px';
+
+    protected int|string|array $columnSpan = 'full';
+
+    protected ?string $polling = '60s';
 
     protected function getData(): array
     {

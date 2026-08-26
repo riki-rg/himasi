@@ -11,20 +11,16 @@ class KelasForm
 {
     public static function configure(Schema $schema): Schema
     {
-        return $schema
-            ->components([
-                Select::make('komunitas_id')
-                    ->relationship('komunitas', 'id')
-                    ->required(),
-                Select::make('divisi_id')
-                    ->relationship('divisi', 'id'),
-                TextInput::make('nama')
-                    ->required(),
-                Textarea::make('deskripsi')
-                    ->columnSpanFull(),
-                TextInput::make('jadwal_hari'),
-                TextInput::make('jadwal_jam'),
-                TextInput::make('tempat'),
-            ]);
+        return $schema->components([
+            Select::make('komunitas_id')
+                ->relationship('komunitas', 'nama')
+                ->required(),
+            TextInput::make('nama')->required()->maxLength(255),
+            Textarea::make('deskripsi')->columnSpanFull(),
+            Select::make('divisi_id')->relationship('divisi', 'nama'),
+            TextInput::make('jadwal_hari')->label('Jadwal hari'),
+            TextInput::make('jadwal_jam')->label('Jadwal jam'),
+            TextInput::make('tempat'),
+        ]);
     }
 }

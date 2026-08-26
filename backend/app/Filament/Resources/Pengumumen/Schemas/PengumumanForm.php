@@ -12,20 +12,17 @@ class PengumumanForm
 {
     public static function configure(Schema $schema): Schema
     {
-        return $schema
-            ->components([
-                TextInput::make('judul')
-                    ->required(),
-                Textarea::make('isi')
-                    ->required()
-                    ->columnSpanFull(),
-                TextInput::make('prioritas')
-                    ->required()
-                    ->default('normal'),
-                DatePicker::make('tayang_mulai'),
-                DatePicker::make('tayang_selesai'),
-                Select::make('komunitas_id')
-                    ->relationship('komunitas', 'id'),
-            ]);
+        return $schema->components([
+            TextInput::make('judul')->required()->maxLength(255),
+            Textarea::make('isi')->required()->columnSpanFull(),
+            Select::make('prioritas')
+                ->options(['normal' => 'Normal', 'penting' => 'Penting'])
+                ->default('normal'),
+            DatePicker::make('tayang_mulai')->label('Tayang mulai'),
+            DatePicker::make('tayang_selesai')->label('Tayang sampai'),
+            Select::make('komunitas_id')
+                ->relationship('komunitas', 'nama')
+                ->label('Untuk komunitas (kosong = semua)'),
+        ]);
     }
 }

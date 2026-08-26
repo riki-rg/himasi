@@ -11,15 +11,16 @@ class GaleriAlbumForm
 {
     public static function configure(Schema $schema): Schema
     {
-        return $schema
-            ->components([
-                TextInput::make('judul')
-                    ->required(),
-                Textarea::make('deskripsi')
-                    ->columnSpanFull(),
-                TextInput::make('cover_path'),
-                Select::make('event_id')
-                    ->relationship('event', 'id'),
-            ]);
+        return $schema->components([
+            TextInput::make('judul')->required()->maxLength(255),
+            Textarea::make('deskripsi')->columnSpanFull(),
+            Select::make('komunitas_id')
+                ->relationship('komunitas', 'nama')
+                ->label('Tampil untuk')
+                ->helperText('Kosongkan = galeri himpunan umum'),
+            Select::make('event_id')
+                ->relationship('event', 'judul')
+                ->label('Terkait event (opsional)'),
+        ]);
     }
 }

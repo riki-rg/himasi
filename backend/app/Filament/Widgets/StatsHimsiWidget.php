@@ -2,22 +2,24 @@
 
 namespace App\Filament\Widgets;
 
-use App\Models\IuranMember;
-use App\Models\Kas;
-use App\Models\Member;
 use App\Models\Periode;
-use App\Models\Surat;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class StatsHimsiWidget extends BaseWidget
 {
+    protected static ?int $sort = 1;
+
+    protected int|string|array $columnSpan = 'full';
+
+    protected ?string $polling = '30s';
+
     protected function getStats(): array
     {
         $periode = Periode::aktif();
 
         $saldo = (float) Kas::query()
-            ->when($periode, fn ($q) => $q->where('periode_id', $periode->id))
+            ->when($periode, fn ($q) => $q->where('periode_id', $periode?->id))
             ->selectRaw("COALESCE(SUM(CASE WHEN tipe = 'pemasukan' THEN nominal ELSE -nominal END), 0) as saldo")
             ->value('saldo');
 
