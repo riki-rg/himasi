@@ -30,6 +30,9 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
+            ->brandName('HIMSI UMKU')
+            ->brandLogo(fn () => view('filament.brand-logo'))
+            ->favicon(asset('favicon-himsi.svg'))
             ->login()
             ->colors([
                 'primary' => Color::hex('#2f5be0'),

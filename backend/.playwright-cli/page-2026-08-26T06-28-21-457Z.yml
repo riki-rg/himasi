@@ -1,0 +1,110 @@
+- generic [active] [ref=f1e1]:
+  - link "Skip to content" [ref=f1e2] [cursor=pointer]:
+    - /url: "#fi-main-content"
+  - navigation "Topbar" [ref=f1e4]:
+    - link "HIMSI UMKU" [ref=f1e6] [cursor=pointer]:
+      - /url: http://localhost:8010/admin
+    - button "User menu" [ref=f1e13] [cursor=pointer]:
+      - img "Avatar of Admin Panel" [ref=f1e14]
+  - generic [ref=f1e15]:
+    - navigation "Sidebar navigation" [ref=f1e18]:
+      - list [ref=f1e19]:
+        - listitem [ref=f1e20]:
+          - list [ref=f1e21]:
+            - listitem [ref=f1e22]:
+              - link "Dashboard" [ref=f1e23] [cursor=pointer]:
+                - /url: http://localhost:8010/admin
+        - listitem [ref=f1e27]:
+          - generic [ref=f1e28] [cursor=pointer]:
+            - generic [ref=f1e29]: Anggota
+            - button "Anggota" [expanded] [ref=f1e30]
+          - list [ref=f1e33]:
+            - listitem [ref=f1e34]:
+              - link "Komunitas" [ref=f1e35] [cursor=pointer]:
+                - /url: http://localhost:8010/admin/komunitas
+            - listitem [ref=f1e39]:
+              - link "Anggota" [ref=f1e40] [cursor=pointer]:
+                - /url: http://localhost:8010/admin/members
+        - listitem [ref=f1e44]:
+          - generic [ref=f1e45] [cursor=pointer]:
+            - generic [ref=f1e46]: Administrasi
+            - button "Administrasi" [expanded] [ref=f1e47]
+          - list [ref=f1e50]:
+            - listitem [ref=f1e51]:
+              - link "Rapat" [ref=f1e52] [cursor=pointer]:
+                - /url: http://localhost:8010/admin/rapats
+        - listitem [ref=f1e56]:
+          - generic [ref=f1e57] [cursor=pointer]:
+            - generic [ref=f1e58]: Sekretariat
+            - button "Sekretariat" [expanded] [ref=f1e59]
+          - list [ref=f1e62]:
+            - listitem [ref=f1e63]:
+              - link "Template Surat" [ref=f1e64] [cursor=pointer]:
+                - /url: http://localhost:8010/admin/surat-templates
+            - listitem [ref=f1e68]:
+              - link "Surat" [ref=f1e69] [cursor=pointer]:
+                - /url: http://localhost:8010/admin/surats
+        - listitem [ref=f1e73]:
+          - generic [ref=f1e74] [cursor=pointer]:
+            - generic [ref=f1e75]: Keuangan
+            - button "Keuangan" [expanded] [ref=f1e76]
+          - list [ref=f1e79]:
+            - listitem [ref=f1e80]:
+              - link "Iuran" [ref=f1e81] [cursor=pointer]:
+                - /url: http://localhost:8010/admin/iurans
+            - listitem [ref=f1e85]:
+              - link "Kas" [ref=f1e86] [cursor=pointer]:
+                - /url: http://localhost:8010/admin/kas
+            - listitem [ref=f1e90]:
+              - link "Kategori Kas" [ref=f1e91] [cursor=pointer]:
+                - /url: http://localhost:8010/admin/kas-kategoris
+        - listitem [ref=f1e96]:
+          - generic [ref=f1e97] [cursor=pointer]:
+            - generic [ref=f1e98]: Struktur Organisasi
+            - button "Struktur Organisasi" [expanded] [ref=f1e99]
+          - list [ref=f1e102]:
+            - listitem [ref=f1e103]:
+              - link "Divisi" [ref=f1e104] [cursor=pointer]:
+                - /url: http://localhost:8010/admin/divisis
+            - listitem [ref=f1e108]:
+              - link "Jabatan" [ref=f1e109] [cursor=pointer]:
+                - /url: http://localhost:8010/admin/jabatans
+            - listitem [ref=f1e113]:
+              - link "Penugasan" [ref=f1e114] [cursor=pointer]:
+                - /url: http://localhost:8010/admin/penugasans
+            - listitem [ref=f1e118]:
+              - link "Periode" [ref=f1e119] [cursor=pointer]:
+                - /url: http://localhost:8010/admin/periodes
+        - listitem [ref=f1e123]:
+          - generic [ref=f1e124] [cursor=pointer]:
+            - generic [ref=f1e125]: Konten Publik
+            - button "Konten Publik" [expanded] [ref=f1e126]
+          - list [ref=f1e129]:
+            - listitem [ref=f1e130]:
+              - link "Artikel" [ref=f1e131] [cursor=pointer]:
+                - /url: http://localhost:8010/admin/artikels
+            - listitem [ref=f1e135]:
+              - link "Agenda" [ref=f1e136] [cursor=pointer]:
+                - /url: http://localhost:8010/admin/events
+            - listitem [ref=f1e140]:
+              - link "Album Galeri" [ref=f1e141] [cursor=pointer]:
+                - /url: http://localhost:8010/admin/galeri-albums
+            - listitem [ref=f1e145]:
+              - link "Kelas" [ref=f1e146] [cursor=pointer]:
+                - /url: http://localhost:8010/admin/kelas
+            - listitem [ref=f1e150]:
+              - link "Pengumuman" [ref=f1e151] [cursor=pointer]:
+                - /url: http://localhost:8010/admin/pengumumen
+            - listitem [ref=f1e155]:
+              - link "Karya" [ref=f1e156] [cursor=pointer]:
+                - /url: http://localhost:8010/admin/proyeks
+    - main [ref=f1e161]:
+      - generic [ref=f1e163]:
+        - heading "Dashboard" [level=1] [ref=f1e166]
+        - generic [ref=f1e173]:
+          - status [ref=f1e174]:
+            - generic [ref=f1e175]: Loading...
+          - status [ref=f1e176]:
+            - generic [ref=f1e177]: Loading...
+  - generic:
+    - status

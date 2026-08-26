@@ -1,133 +1,156 @@
 <style>
-/* ===== HIMSI Filament Theme — cobalt x IBM Plex x blueprint ===== */
-:root { --himsi-cobalt: #2f5be0; --himsi-ink: #0b1220; }
+/* ===== HIMSI Filament Theme v2 — clean light theme, cobalt accent ===== */
+:root { --himsi: #2f5be0; --himsi-light: #eef4ff; --himsi-dark: #2449bd; }
 
-body, .fi-body {
-    font-family: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif !important;
-}
+/* Font */
+body, .fi-body { font-family: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif !important; }
 
-/* Login page — full redesign via CSS only */
+/* ===== LOGIN PAGE ===== */
 .fi-simple-layout {
     max-width: none !important;
-    padding: 0 !important;
     min-height: 100vh !important;
     display: grid !important;
     place-items: center !important;
-    background: var(--himsi-ink) !important;
+    background: #f0f4ff !important;
     background-image:
-        radial-gradient(ellipse 60% 50% at 50% -10%, rgb(79 120 240 / 0.12), transparent),
-        linear-gradient(to right, rgb(122 157 248 / 0.04) 1px, transparent 1px),
-        linear-gradient(to bottom, rgb(122 157 248 / 0.04) 1px, transparent 1px) !important;
-    background-size: auto, 28px 28px, 28px 28px !important;
+        radial-gradient(ellipse 50% 40% at 50% 0%, rgb(47 91 224 / 0.08), transparent),
+        linear-gradient(to right, rgb(47 91 224 / 0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgb(47 91 224 / 0.03) 1px, transparent 1px) !important;
+    background-size: auto, 24px 24px, 24px 24px !important;
 }
 
+/* Hide Filament logo & heading */
+.fi-simple-layout .fi-logo,
+.fi-simple-layout .fi-simple-page-heading { display: none !important; }
+
+/* Card */
 .fi-simple-layout .fi-simple-main {
     width: 100% !important;
-    max-width: 24rem !important;
-    background: rgb(255 255 255 / 0.04) !important;
-    border: 1px solid rgb(122 157 248 / 0.15) !important;
+    max-width: 26rem !important;
+    background: white !important;
+    border: 1px solid rgb(47 91 224 / 0.1) !important;
     border-radius: 1rem !important;
-    padding: 2.5rem 2rem !important;
-    backdrop-filter: blur(12px);
+    padding: 2.5rem 2.25rem !important;
+    box-shadow: 0 4px 24px rgb(47 91 224 / 0.08) !important;
 }
 
-/* Hide Filament branding */
-.fi-simple-layout .fi-logo,
-.fi-simple-layout .fi-simple-page-heading,
-.fi-simple-layout .fi-simple-page-subheading,
-.fi-layout .fi-logo img { display: none !important; }
-
-/* Custom brand text injection point */
+/* Inject brand above form */
 .fi-simple-layout .fi-simple-main::before {
-    content: '▣ HIMSI UMKU';
+    content: '';
     display: block;
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 1rem;
-    font-weight: 700;
-    letter-spacing: 0.25em;
-    color: #a5c0fc;
-    text-align: center;
-    margin-bottom: 0.5rem;
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 1rem;
+    border-radius: 12px;
+    background: var(--himsi);
+    background: var(--himsi); color: white; font-family: 'IBM Plex Mono', monospace; font-size: 1.4rem; font-weight: 700; line-height: 48px; text-align: center; content: 'H';
 }
 
 .fi-simple-layout .fi-simple-main::after {
-    content: 'Panel Pengurus — Sistem Informasi';
+    content: 'HIMSI UMKU — Panel Pengurus';
     display: block;
-    font-size: 0.65rem;
-    letter-spacing: 0.1em;
-    color: #475569;
     text-align: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    color: #94a3b8;
     margin-top: 1.5rem;
 }
 
-/* Form fields */
+/* Labels */
+.fi-simple-layout .fi-label {
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    color: #374151 !important;
+}
+
+/* Inputs */
 .fi-simple-layout .fi-input-wrp {
-    border-radius: 0.5rem !important;
-    border-color: rgb(122 157 248 / 0.25) !important;
-    background: transparent !important;
+    border-radius: 0.6rem !important;
+    border-color: #d1d5db !important;
+    transition: border-color 0.15s, box-shadow 0.15s !important;
 }
 .fi-simple-layout .fi-input-wrp:focus-within {
-    border-color: #4f78f0 !important;
-    box-shadow: 0 0 0 3px rgb(79 120 240 / 0.12) !important;
-}
-.fi-simple-layout .fi-input-wrp input {
-    background: transparent !important;
-    color: #e6edf7 !important;
-}
-.fi-simple-layout .fi-label {
-    font-family: 'IBM Plex Mono', monospace !important;
-    font-size: 0.65rem !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.15em !important;
-    color: #64748b !important;
+    border-color: var(--himsi) !important;
+    box-shadow: 0 0 0 3px rgb(47 91 224 / 0.1) !important;
 }
 
-/* Submit button */
+/* Button */
 .fi-simple-layout .fi-btn-color-primary {
     width: 100%;
-    margin-top: 1.5rem;
-    padding: 0.75rem !important;
-    border-radius: 0.5rem !important;
-    background: var(--himsi-cobalt) !important;
-    font-weight: 700 !important;
-    letter-spacing: 0.15em !important;
-    transition: transform 0.15s ease, background 0.15s ease !important;
+    padding: 0.7rem !important;
+    border-radius: 0.6rem !important;
+    background: var(--himsi) !important;
+    font-weight: 600 !important;
+    transition: all 0.15s ease !important;
 }
 .fi-simple-layout .fi-btn-color-primary:hover {
-    background: #2449bd !important;
+    background: var(--himsi-dark) !important;
     transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgb(47 91 224 / 0.25) !important;
 }
 
-/* Sidebar dark */
+/* ===== DASHBOARD / PANEL ===== */
+
+/* Sidebar — clean white with cobalt active */
 .fi-sidebar {
-    background-color: var(--himsi-ink) !important;
+    background: white !important;
+    border-right: 1px solid #f0f0f0 !important;
 }
-.fi-sidebar .fi-sidebar-item-label { color: #94a3b8 !important; }
+.fi-sidebar .fi-sidebar-item {
+    border-radius: 0.5rem !important;
+    margin: 1px 8px !important;
+    transition: background 0.15s !important;
+}
+.fi-sidebar .fi-sidebar-item:hover {
+    background: #f0f4ff !important;
+}
 .fi-sidebar .fi-sidebar-item.fi-sidebar-item-active {
-    background: rgb(47 91 224 / 0.12) !important;
-    border-radius: 0.5rem;
+    background: var(--himsi-light) !important;
+    color: var(--himsi) !important;
 }
 .fi-sidebar .fi-sidebar-item.fi-sidebar-item-active .fi-sidebar-item-label {
-    color: #a5c0fc !important;
+    color: var(--himsi) !important;
+    font-weight: 600 !important;
 }
-.fi-sidebar .fi-sidebar-group-label { color: #334155 !important; }
+.fi-sidebar .fi-sidebar-group-label {
+    font-size: 0.65rem !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.1em !important;
+    color: #9ca3af !important;
+}
 
-/* Body */
+/* Topbar */
+.fi-topbar {
+    background: white !important;
+    border-bottom: 1px solid #f0f0f0 !important;
+}
+
+/* Body bg */
 .fi-body { background-color: #f8fafc !important; }
-.dark .fi-body { background-color: #0f172a !important; }
+
+/* Cards */
+.fi-section {
+    border-radius: 0.75rem !important;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.04), 0 1px 2px rgb(0 0 0 / 0.03) !important;
+}
 
 /* Buttons */
-.fi-btn-color-primary { background-color: var(--himsi-cobalt) !important; }
-.fi-btn-color-primary:hover { background-color: #2449bd !important; }
+.fi-btn-color-primary {
+    background: var(--himsi) !important;
+    border-radius: 0.5rem !important;
+}
+.fi-btn-color-primary:hover { background: var(--himsi-dark) !important; }
 
-/* Table */
-.fi-ta-row:hover { background-color: rgb(47 91 224 / 0.04) !important; }
+/* Tables */
+.fi-ta-row:hover { background: #f0f4ff !important; }
 .fi-badge { border-radius: 9999px !important; font-weight: 600 !important; }
 
 /* Stat values */
-.fi-stat-value { font-variant-numeric: tabular-nums !important; }
+.fi-stat-value { font-variant-numeric: tabular-nums !important; font-weight: 700 !important; }
 
-/* Rolling digits */
+/* NumberFlow rolling digits */
 .nf-digit {
     display: inline-block; overflow: hidden;
     height: 1em; line-height: 1em; vertical-align: bottom;
@@ -141,4 +164,22 @@ body, .fi-body {
 @media (prefers-reduced-motion: reduce) {
     .nf-digit__col { transition: none; }
 }
+</style>
+
+<style>
+/* Stats harus di atas chart */
+.fi-wi-stats-overview { order: -1; }
+
+/* Nominal tidak wrap */
+.fi-stat-value { white-space: nowrap !important; }
+
+/* Stat label lebih kecil */
+.fi-stat-label {
+    font-size: 0.75rem !important;
+    color: #6b7280 !important;
+    font-weight: 500 !important;
+}
+
+/* Chart card title */
+.fi-wi-chart .fi-section-header-heading { font-size: 0.9rem !important; }
 </style>

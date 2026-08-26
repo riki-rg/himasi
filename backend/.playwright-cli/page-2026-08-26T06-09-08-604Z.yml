@@ -1,0 +1,26 @@
+- generic [ref=e1]:
+  - main [ref=e4]:
+    - text: ▣ HIMSI UMKU
+    - generic [ref=e6]:
+      - heading "Sign in" [level=1] [ref=e8]
+      - generic [ref=e12]:
+        - generic [ref=e16]:
+          - generic [ref=e19]:
+            - generic [ref=e23]:
+              - text: Email address
+              - superscript [ref=e24]: "*"
+            - textbox "Email address*" [active] [ref=e28]
+          - generic [ref=e31]:
+            - generic [ref=e35]:
+              - text: Password
+              - superscript [ref=e36]: "*"
+            - generic [ref=e38]:
+              - textbox "Password*" [ref=e40]
+              - button "Show password" [ref=e43] [cursor=pointer]
+          - generic [ref=e52]:
+            - checkbox "Remember me" [ref=e53]
+            - generic [ref=e54]: Remember me
+        - button "Sign in" [ref=e60] [cursor=pointer]
+    - text: Panel Pengurus — Sistem Informasi
+  - generic:
+    - status

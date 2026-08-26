@@ -12,6 +12,8 @@ class KasChartWidget extends ChartWidget
 
     protected ?string $maxHeight = '300px';
 
+    protected static ?int $sort = 2;
+
     protected int|string|array $columnSpan = 'full';
 
     protected ?string $polling = '60s';
