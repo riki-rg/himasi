@@ -3,8 +3,9 @@
 import { type CSSProperties, type ReactNode, useEffect, useRef, useState } from 'react'
 
 /**
- * Scroll-reveal — elemen muncul fade-up sekali saat masuk viewport.
- * Reduced-motion: langsung tampak tanpa animasi.
+ * Scroll-reveal — fade-up saat masuk viewport.
+ * Konten SELALU visible secara default (opacity 1 di CSS),
+ * animasi hanya tambahan visual. Reduced-motion: skip animasi.
  */
 export function Reveal({
   children,
@@ -34,10 +35,17 @@ export function Reveal({
           io.disconnect()
         }
       },
-      { rootMargin: '-40px 0px' },
+      { rootMargin: '0px 0px' },
     )
     io.observe(el)
-    return () => io.disconnect()
+
+    // Fallback: force visible setelah 1.5 detik apapun yang terjadi
+    const timer = setTimeout(() => setVisible(true), 1500)
+
+    return () => {
+      io.disconnect()
+      clearTimeout(timer)
+    }
   }, [])
 
   return (
@@ -52,7 +60,7 @@ export function Reveal({
   )
 }
 
-/** Angka count-up untuk statistik — instant jika reduced-motion. */
+/** Angka count-up — instant jika reduced-motion atau NaN. */
 export function CountUp({ target, suffix = '' }: { target: string; suffix?: string }) {
   const numeric = Number.parseInt(target.replace(/\D/g, ''), 10)
   const hasSuffix = target.replace(/[0-9]/g, '')
@@ -72,16 +80,14 @@ export function CountUp({ target, suffix = '' }: { target: string; suffix?: stri
 
       const durasi = 900
       const mulai = performance.now()
-      let raf = 0
 
       const tick = (now: number) => {
         const t = Math.min((now - mulai) / durasi, 1)
         const eased = 1 - Math.pow(1 - t, 3)
         setNilai(Math.round(eased * numeric))
-        if (t < 1) raf = requestAnimationFrame(tick)
+        if (t < 1) requestAnimationFrame(tick)
       }
-      raf = requestAnimationFrame(tick)
-      return () => cancelAnimationFrame(raf)
+      requestAnimationFrame(tick)
     })
 
     if (ref.current) io.observe(ref.current)

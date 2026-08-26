@@ -1,4 +1,5 @@
 import { Suspense, lazy } from 'react'
+import { useState } from 'react'
 import { Link, Navigate, Outlet, createBrowserRouter, useLocation, useNavigate } from 'react-router'
 import { api, hapusToken, punyaToken } from './lib/api'
 
@@ -26,6 +27,7 @@ function Fallback() {
 
 function AppShell() {
   const navigate = useNavigate()
+  const [login, setLogin] = useState(punyaToken())
 
   return (
     <div className="min-h-screen">
@@ -33,18 +35,25 @@ function AppShell() {
         <Link to="/" className="font-serif text-lg font-bold italic text-forest-700">
           Sibiner
         </Link>
-        <button
-          type="button"
-          className="text-sm text-forest-600 hover:text-forest-700"
-          onClick={() =>
-            api.post('/auth/logout').finally(() => {
-              hapusToken()
-              navigate('/login', { replace: true })
-            })
-          }
-        >
-          Keluar
-        </button>
+        {login ? (
+          <button
+            type="button"
+            className="text-sm text-forest-600 hover:text-forest-700"
+            onClick={() =>
+              api.post('/auth/logout').finally(() => {
+                hapusToken()
+                setLogin(false)
+                navigate('/', { replace: true })
+              })
+            }
+          >
+            Keluar
+          </button>
+        ) : (
+          <Link to="/login" className="text-sm font-medium text-forest-700 hover:underline">
+            Masuk
+          </Link>
+        )}
       </header>
 
       <Suspense fallback={<Fallback />}>
