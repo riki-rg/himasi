@@ -7,6 +7,7 @@ use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Forms\Components\Placeholder;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -59,9 +60,9 @@ class SuratsTable
                     ->label('Set Status')
                     ->icon('heroicon-o-arrow-path')
                     ->visible(fn ($record) => $record->jenis === 'keluar' && $record->nextStatus() !== null)
-                    ->form([
+                    ->form(fn ($record) => [
                         Placeholder::make('info')
-                            ->content('Lanjut ke: '.$record->nextStatus()),
+                            ->content('Lanjut ke: '.($record->nextStatus() ?? 'akhir')),
                     ])
                     ->action(function ($record) {
                         $next = $record->nextStatus();

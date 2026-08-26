@@ -183,3 +183,38 @@ body, .fi-body { font-family: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-se
 /* Chart card title */
 .fi-wi-chart .fi-section-header-heading { font-size: 0.9rem !important; }
 </style>
+
+<style>
+/* Override English labels ke Indonesia */
+.fi-simple-layout .fi-simple-page-heading {
+    font-size: 0 !important;
+}
+.fi-simple-layout .fi-simple-page-heading::after {
+    content: 'Masuk';
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #111827;
+}
+.fi-simple-layout .fi-label[for*="email"]::after { content: ''; }
+.fi-simple-layout .fi-label[for*="email"] { font-size: 0 !important; }
+.fi-simple-layout .fi-label[for*="email"]::before {
+    content: 'Alamat Email';
+    font-size: 0.8rem;
+}
+.fi-simple-layout .fi-label[for*="password"] { font-size: 0 !important; }
+.fi-simple-layout .fi-label[for*="password"]::before {
+    content: 'Password';
+    font-size: 0.8rem;
+}
+.fi-simple-layout .fi-btn-color-primary { font-size: 0 !important; }
+.fi-simple-layout .fi-btn-color-primary::after {
+    content: 'Masuk ke Panel';
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+.fi-simple-layout .fi-checkbox-label { font-size: 0 !important; }
+.fi-simple-layout .fi-checkbox-label::after {
+    content: 'Ingat saya';
+    font-size: 0.875rem;
+}
+</style>

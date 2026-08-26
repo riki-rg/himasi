@@ -31,7 +31,7 @@ class StatsHimsiWidget extends BaseWidget
             Stat::make('Anggota aktif', Member::query()->where('status', 'aktif')->count())
                 ->description('seluruh himpunan')
                 ->color('success'),
-            Stat::make('Saldo kas', 'Rp\u{00A0}'.number_format($saldo, 0, ',', '.'))
+            Stat::make('Saldo kas', "Rp\u{00A0}".number_format($saldo, 0, ',', '.'))
                 ->description($periode?->nama ?? '-'),
             Stat::make('Surat menunggu review', Surat::query()->where('jenis', 'keluar')->where('status', 'review')->count()),
             Stat::make('Tagihan belum lunas', IuranMember::query()->where('status', 'belum')->count())
