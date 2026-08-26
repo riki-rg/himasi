@@ -40,4 +40,12 @@ class Surat extends Model
     {
         return $this->belongsTo(User::class, 'created_by');
     }
+
+    public function nextStatus(): ?string
+    {
+        $urutan = ['draft', 'review', 'disetujui', 'terkirim'];
+        $posisi = array_search($this->status ?? 'draft', $urutan, true);
+
+        return $urutan[$posisi + 1] ?? null;
+    }
 }

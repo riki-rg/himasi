@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\Members\Tables;
+namespace App\Filament\Resources\Periodes\Tables;
 
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -8,33 +8,20 @@ use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
-class MembersTable
+class PeriodesTable
 {
     public static function configure(Table $table): Table
     {
         return $table
             ->columns([
-                TextColumn::make('user.name')
-                    ->searchable(),
-                TextColumn::make('nim')
-                    ->searchable(),
                 TextColumn::make('nama')
                     ->searchable(),
-                TextColumn::make('prodi')
-                    ->searchable(),
-                TextColumn::make('angkatan')
-                    ->searchable(),
-                TextColumn::make('email')
-                    ->label('Email address')
-                    ->searchable(),
-                TextColumn::make('no_hp')
-                    ->searchable(),
-                TextColumn::make('foto_path')
-                    ->searchable(),
-                TextColumn::make('link_portofolio')
-                    ->searchable(),
-                TextColumn::make('link_instagram')
-                    ->searchable(),
+                TextColumn::make('tanggal_mulai')
+                    ->date()
+                    ->sortable(),
+                TextColumn::make('tanggal_selesai')
+                    ->date()
+                    ->sortable(),
                 TextColumn::make('status')
                     ->searchable(),
                 TextColumn::make('created_at')

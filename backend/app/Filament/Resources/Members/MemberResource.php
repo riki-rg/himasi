@@ -8,6 +8,8 @@ use App\Filament\Resources\Members\Pages\ListMembers;
 use App\Filament\Resources\Members\Schemas\MemberForm;
 use App\Filament\Resources\Members\Tables\MembersTable;
 use App\Models\Member;
+use App\Models\User;
+use App\Services\RoleResolver;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -22,7 +24,7 @@ class MemberResource extends Resource
 
     protected static ?string $navigationLabel = 'Anggota';
 
-    protected static ?string $modelLabel = 'anggota';
+    protected static \UnitEnum|string|null $navigationGroup = 'Anggota';
 
     public static function form(Schema $schema): Schema
     {
@@ -48,5 +50,16 @@ class MemberResource extends Resource
             'create' => CreateMember::route('/create'),
             'edit' => EditMember::route('/{record}/edit'),
         ];
+    }
+
+    public static function canAccess(): bool
+    {
+        $user = auth()->user();
+        if (! $user instanceof User) {
+            return false;
+        }
+        $resolver = app(RoleResolver::class);
+
+        return $resolver->isAdminPusat($user);
     }
 }

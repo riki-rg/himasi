@@ -13,38 +13,25 @@ class MemberForm
     {
         return $schema
             ->components([
+                Select::make('user_id')
+                    ->relationship('user', 'name'),
                 TextInput::make('nim')
-                    ->label('NIM')
-                    ->required()
-                    ->unique(ignoreRecord: true)
-                    ->maxLength(20),
+                    ->required(),
                 TextInput::make('nama')
-                    ->required()
-                    ->maxLength(255),
-                TextInput::make('prodi')
-                    ->label('Prodi'),
+                    ->required(),
+                TextInput::make('prodi'),
                 TextInput::make('angkatan')
-                    ->label('Angkatan')
-                    ->required()
-                    ->numeric()
-                    ->length(4),
+                    ->required(),
                 TextInput::make('email')
+                    ->label('Email address')
                     ->email(),
-                TextInput::make('no_hp')
-                    ->label('No. HP'),
+                TextInput::make('no_hp'),
                 Textarea::make('alamat')
                     ->columnSpanFull(),
-                TextInput::make('link_portofolio')
-                    ->label('Link Portofolio')
-                    ->url(),
-                TextInput::make('link_instagram')
-                    ->label('Instagram'),
-                Select::make('status')
-                    ->options([
-                        'aktif' => 'Aktif',
-                        'nonaktif' => 'Nonaktif',
-                        'alumni' => 'Alumni',
-                    ])
+                TextInput::make('foto_path'),
+                TextInput::make('link_portofolio'),
+                TextInput::make('link_instagram'),
+                TextInput::make('status')
                     ->required()
                     ->default('aktif'),
             ]);

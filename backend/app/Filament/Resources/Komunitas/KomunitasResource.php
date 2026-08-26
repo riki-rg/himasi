@@ -8,6 +8,8 @@ use App\Filament\Resources\Komunitas\Pages\ListKomunitas;
 use App\Filament\Resources\Komunitas\Schemas\KomunitasForm;
 use App\Filament\Resources\Komunitas\Tables\KomunitasTable;
 use App\Models\Komunitas;
+use App\Models\User;
+use App\Services\RoleResolver;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -22,7 +24,7 @@ class KomunitasResource extends Resource
 
     protected static ?string $navigationLabel = 'Komunitas';
 
-    protected static ?string $modelLabel = 'komunitas';
+    protected static \UnitEnum|string|null $navigationGroup = 'Anggota';
 
     public static function form(Schema $schema): Schema
     {
@@ -48,5 +50,16 @@ class KomunitasResource extends Resource
             'create' => CreateKomunitas::route('/create'),
             'edit' => EditKomunitas::route('/{record}/edit'),
         ];
+    }
+
+    public static function canAccess(): bool
+    {
+        $user = auth()->user();
+        if (! $user instanceof User) {
+            return false;
+        }
+        $resolver = app(RoleResolver::class);
+
+        return $resolver->isAdminPusat($user);
     }
 }

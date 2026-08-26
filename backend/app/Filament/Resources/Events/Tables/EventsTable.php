@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\Members\Tables;
+namespace App\Filament\Resources\Events\Tables;
 
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -8,32 +8,25 @@ use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
-class MembersTable
+class EventsTable
 {
     public static function configure(Table $table): Table
     {
         return $table
             ->columns([
-                TextColumn::make('user.name')
+                TextColumn::make('judul')
                     ->searchable(),
-                TextColumn::make('nim')
+                TextColumn::make('poster_path')
                     ->searchable(),
-                TextColumn::make('nama')
+                TextColumn::make('lokasi')
                     ->searchable(),
-                TextColumn::make('prodi')
-                    ->searchable(),
-                TextColumn::make('angkatan')
-                    ->searchable(),
-                TextColumn::make('email')
-                    ->label('Email address')
-                    ->searchable(),
-                TextColumn::make('no_hp')
-                    ->searchable(),
-                TextColumn::make('foto_path')
-                    ->searchable(),
-                TextColumn::make('link_portofolio')
-                    ->searchable(),
-                TextColumn::make('link_instagram')
+                TextColumn::make('mulai')
+                    ->dateTime()
+                    ->sortable(),
+                TextColumn::make('selesai')
+                    ->dateTime()
+                    ->sortable(),
+                TextColumn::make('komunitas.id')
                     ->searchable(),
                 TextColumn::make('status')
                     ->searchable(),

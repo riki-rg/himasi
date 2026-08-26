@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\Members\Tables;
+namespace App\Filament\Resources\Rapats\Tables;
 
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -8,35 +8,36 @@ use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
-class MembersTable
+class RapatsTable
 {
     public static function configure(Table $table): Table
     {
         return $table
             ->columns([
-                TextColumn::make('user.name')
+                TextColumn::make('judul')
                     ->searchable(),
-                TextColumn::make('nim')
+                TextColumn::make('tanggal')
+                    ->date()
+                    ->sortable(),
+                TextColumn::make('jam_mulai')
+                    ->time()
+                    ->sortable(),
+                TextColumn::make('jam_selesai')
+                    ->time()
+                    ->sortable(),
+                TextColumn::make('tempat')
                     ->searchable(),
-                TextColumn::make('nama')
+                TextColumn::make('lampiran_path')
                     ->searchable(),
-                TextColumn::make('prodi')
+                TextColumn::make('komunitas.id')
                     ->searchable(),
-                TextColumn::make('angkatan')
-                    ->searchable(),
-                TextColumn::make('email')
-                    ->label('Email address')
-                    ->searchable(),
-                TextColumn::make('no_hp')
-                    ->searchable(),
-                TextColumn::make('foto_path')
-                    ->searchable(),
-                TextColumn::make('link_portofolio')
-                    ->searchable(),
-                TextColumn::make('link_instagram')
+                TextColumn::make('qr_secret')
                     ->searchable(),
                 TextColumn::make('status')
                     ->searchable(),
+                TextColumn::make('user_id')
+                    ->numeric()
+                    ->sortable(),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
