@@ -11,12 +11,21 @@
 openapi: "3.0.3"
 info:
   title: HIMSI UMKU API
-  version: "1.0.0-draft"
+  version: "1.1.0-draft"
   description: |
     Backend tunggal untuk 3 client: landing page Next.js (HIMSI),
     aplikasi React BitSI, dan aplikasi React Sibiner.
 
     Endpoint tanpa tag `Private` dapat diakses publik (tanpa token).
+
+    Amendment v1.1 — sinkronisasi implementasi Fase 4–6:
+    - GET /keanggotaan (antrean approve pengurus)
+    - PUT /surat/templates/{id} (edit format, counter tidak direset)
+    - GET /kas/export (laporan xlsx/csv)
+    - GET /surat/{id}/logs (audit alur status)
+    - /auth/me penugasan_aktif memuat tingkat & komunitas_kode
+    - KeanggotaanKomunitas += daftar_pada
+    - Konvensi: PATCH {resource}/{id} adalah alias resmi dari PUT untuk update resource (konvensi Laravel)
 servers:
   - url: https://api.himsi-umku.test/api/v1
     description: Development
@@ -123,7 +132,14 @@ paths:
                         items: { $ref: "#/components/schemas/Komunitas" }
                       penugasan_aktif:
                         type: array
-                        items: { $ref: "#/components/schemas/Penugasan" }
+                        items:
+                          type: object
+                          properties:
+                            jabatan:        { type: string, example: "Ketua Divisi" }
+                            tingkat:        { type: string, enum: [utama, staf, anggota] }
+                            divisi:         { type: string, example: "Divisi Pengembangan Diri" }
+                            komunitas_kode: { type: string, enum: [HIMSI, BITSI, SIBINER], nullable: true }
+                            periode:        { type: string, example: "Kepengurusan 2026" }
     patch:
       tags: [Auth]
       summary: Update profil sendiri (nama, kontak, tautan, foto)
@@ -486,6 +502,8 @@ paths:
           description: Ditugaskan
           content: { application/json: { schema: { $ref: "#/components/schemas/Penugasan" } } }
         "422": { $ref: "#/components/responses/ValidationError" }
+
+  /penugasan/{id}:
     delete:
       tags: [Struktur Organisasi]
       summary: Lepaskan penugasan
@@ -609,6 +627,26 @@ paths:
             text/csv: {}
 
   /keanggotaan:
+    get:
+      tags: [Anggota]
+      summary: Daftar keanggotaan komunitas (antrean approve pengurus)
+      parameters:
+        - name: komunitas
+          in: query
+          required: true
+          schema: { type: string, enum: [HIMSI, BITSI, SIBINER] }
+        - name: status
+          in: query
+          schema: { type: string, enum: [pending, disetujui, ditolak] }
+      responses:
+        "200":
+          description: Daftar keanggotaan sesuai filter, terbaru dulu
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/KeanggotaanKomunitas" }
+        "403": { $ref: "#/components/responses/Forbidden" }
     post:
       tags: [Anggota]
       summary: Ajukan keanggotaan komunitas / tambah anggota manual (ADR D6)
@@ -925,6 +963,47 @@ paths:
         "201":
           description: Dibuat
           content: { application/json: { schema: { $ref: "#/components/schemas/SuratTemplate" } } }
+
+  /surat/templates/{id}:
+    put:
+      tags: [Surat]
+      summary: Edit format/nama jenis template — surat lama tidak berubah nomornya (US-17)
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nama_jenis: { type: string, example: proposal }
+                format:     { type: string, example: "{urut}/HIMSI/UMKU/{romawi}/{tahun}" }
+      responses:
+        "200":
+          description: Template diperbarui
+          content: { application/json: { schema: { $ref: "#/components/schemas/SuratTemplate" } } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /surat/{id}/logs:
+    get:
+      tags: [Surat]
+      summary: Riwayat transisi status surat keluar — siapa & kapan (US-19)
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "200":
+          description: Log kronologis dari draft hingga status terkini
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    status:  { type: string, enum: [draft, review, disetujui, terkirim] }
+                    catatan: { type: string, nullable: true }
+                    oleh:    { type: string, description: nama pengubah }
+                    pada:    { type: string, format: date-time }
+        "404": { $ref: "#/components/responses/NotFound" }
 
   # ────────────────── KONTEN PUBLIK (admin/pengurus) ──────────────────
   /artikels:
@@ -1409,6 +1488,31 @@ paths:
           content: { application/json: { schema: { $ref: "#/components/schemas/KasTransaksi" } } }
         "422": { $ref: "#/components/responses/ValidationError" }
 
+  /kas/export:
+    get:
+      tags: [Keuangan]
+      summary: Export laporan keuangan — transaksi + total + saldo (US-21)
+      parameters:
+        - name: periode_id
+          in: query
+          schema: { type: integer }
+        - name: tanggal_dari
+          in: query
+          schema: { type: string, format: date }
+        - name: tanggal_sampai
+          in: query
+          schema: { type: string, format: date }
+        - name: format
+          in: query
+          schema: { type: string, enum: [xlsx, csv], default: xlsx }
+      responses:
+        "200":
+          description: File unduhan berisi daftar transaksi + total + saldo
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet: {}
+            text/csv: {}
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /kas/{id}:
     get:
       tags: [Keuangan]
@@ -1784,6 +1888,7 @@ components:
         komunitas:      { $ref: "#/components/schemas/Komunitas" }
         status:         { type: string, enum: [pending, disetujui, ditolak] }
         disetujui_pada: { type: string, format: date-time, nullable: true }
+        daftar_pada:    { type: string, format: date-time, nullable: true }
 
     Periode:
       type: object

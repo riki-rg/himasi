@@ -122,7 +122,7 @@ Urutan konkret:
 - ~~`bitsi-pengurus-pendaftar.md`~~ ✅ tabs pending/disetujui/ditolak; approve + **undo toast 5 detik**; race 409 → auto-refresh
 - ~~`bitsi-kelas.md`~~ ✅ katalog kartu per divisi + detail materi unduh/buka (urutan sesi terjaga)
 - ~~`galeri-album.md`~~ ✅ masonry columns + lightbox deep-linkable `?foto=N`, keyboard ←→ESC, swipe mobile, preload ±1
-- 📌 Amendment backend pendukung: `GET /keanggotaan?komunitas=&status=` (list pendaftar utk UI approve) + `/auth/me` penugasan_aktif kini menyertakan `tingkat` & `komunitas_kode` — perlu sinkron ke openapi.yaml
+- ~~Amendment backend~~ ✅ **openapi.yaml v1.1.0 tersinkron penuh**: GET /keanggotaan · PUT /surat/templates/{id} · GET /kas/export · GET /surat/{id}/logs · /auth/me tingkat+komunitas_kode · daftar_pada · konvensi PATCH=alias PUT
 
 #### Iterasi wireframe tahap akhir ✅ — 16/16 TERCAKUP
 
